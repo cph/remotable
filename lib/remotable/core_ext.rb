@@ -1,0 +1,1 @@
+require "remotable/core_ext/enumerable"
