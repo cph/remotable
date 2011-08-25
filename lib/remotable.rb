@@ -266,6 +266,12 @@ private
   
   
   
+  def local_attribute_changed?(name)
+    changed.member?(name.to_s)
+  end
+  
+  
+  
 protected
   
   def merge_remote_errors(errors)
@@ -286,7 +292,7 @@ protected
   
   def merge_local_data(remote_resource, changes_only=false)
     remote_attribute_map.each do |remote_attr, local_attr|
-      if !changes_only || changed.member?(local_attr.to_s)
+      if !changes_only || local_attribute_changed?(local_attr)
         remote_resource.send("#{remote_attr}=", send(local_attr))
       end
     end
