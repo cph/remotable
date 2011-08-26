@@ -15,7 +15,7 @@ class Tenant < ActiveRecord::Base
   remote_model RemoteTenant
   attr_remote :slug, :church_name => :name, :id => :remote_id
   find_by :slug
-  find_by :name => "by_nombre/:name.json"
+  find_by :name => "by_nombre/:name"
 end
 
 

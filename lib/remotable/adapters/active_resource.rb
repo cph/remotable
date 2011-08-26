@@ -19,11 +19,7 @@ module Remotable
         
         
         def find_by!(key, value)
-          if key == :id
-            find(value)
-          else
-            find(:one, :from => path_for(key, value))
-          end
+          find(:one, :from => path_for(key, value))
         end
         
         def find_by(key, value)
@@ -39,9 +35,9 @@ module Remotable
           route = route_for(local_key)
           path = route.gsub(/:#{local_key}/, value.to_s)
           if relative_path?(path)
-            path
+            join_url_segments(prefix, collection_name, "#{path}.#{format.extension}")
           else
-            join_url_segments(prefix, collection_name, path)
+            path
           end
         end
         
@@ -52,7 +48,7 @@ module Remotable
         
         
         def relative_path?(path)
-          path.start_with?("/") || path["://"]
+          !(path.start_with?("/") || path["://"])
         end
         
         def join_url_segments(*segments)

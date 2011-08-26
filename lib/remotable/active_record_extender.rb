@@ -55,9 +55,9 @@ module Remotable
         @remote_attribute_map = map
       end
       
-      def fetch_with(*args)
-        keys_and_routes = extract_keys_and_routes(*args)
-        @remote_attribute_routes.merge!(keys_and_routes)
+      def fetch_with(*local_keys)
+        remote_keys_and_routes = extract_remote_keys_and_routes(*local_keys)
+        @remote_attribute_routes.merge!(remote_keys_and_routes)
       end
       alias :find_by :fetch_with
       
@@ -93,7 +93,11 @@ module Remotable
       
       def default_route_for(local_key, remote_key=nil)
         remote_key ||= remote_attribute_name(local_key)
-        "by_#{remote_key}/:#{local_key}.json"
+        if remote_key.to_s == primary_key
+          ":#{local_key}"
+        else
+          "by_#{remote_key}/:#{local_key}"
+        end
       end
       
       
@@ -156,7 +160,7 @@ module Remotable
       end
       
       
-      def extract_keys_and_routes(*local_keys)
+      def extract_remote_keys_and_routes(*local_keys)
         keys_and_routes = local_keys.extract_options!
         {}.tap do |hash|
           local_keys.each {|local_key| hash[remote_attribute_name(local_key)] = nil}
