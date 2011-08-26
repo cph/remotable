@@ -1,29 +1,88 @@
-require 'test_helper'
-require 'remotable'
-require 'support/active_resource'
-require 'active_resource_simulator'
+require "test_helper"
+require "remotable"
+require "support/active_resource"
+require "active_resource_simulator"
 
 
 class RemotableTest < ActiveSupport::TestCase
   
   
-  test "should create a record locally when fetching a new remote resource" do
+  
+  test "should consider :id to be the remote key if none is specified" do
+    assert_equal :id,         RemoteWithoutKey.remote_key
+    assert_equal :remote_id,  RemoteWithoutKey.local_key
+  end
+  
+  test "should use a different remote_key if one is supplied" do
+    assert_equal :slug, RemoteWithKey.remote_key
+    assert_equal :slug, RemoteWithKey.local_key
+  end
+  
+  test "should be able to generate paths for with different attributes" do
+    assert_equal "/api/accounts/by_slug/value.json",   RemoteTenant.path_for(:slug, "value")
+    assert_equal "/api/accounts/by_nombre/value.json", RemoteTenant.path_for(:name, "value")
+  end
+  
+  
+  
+  test "should be able to find resources by different attributes" do
     new_tenant_slug = "not_found"
     
     assert_equal 0, Tenant.where(:slug => new_tenant_slug).count,
-      "There's not supposed to be a Tenant with the subdomain #{new_tenant_slug}."
+      "There's not supposed to be a Tenant with the slug #{new_tenant_slug}."
     
     assert_difference "Tenant.count", +1 do
-      Tenant::RemoteTenant.run_simulation do |s|
-        attrs = {
-          :id => 1,
+      RemoteTenant.run_simulation do |s|
+        s.show(nil, {
+          :id => 46,
+          :slug => new_tenant_slug,
+          :church_name => "Not Found"
+        }, :path => "/api/accounts/by_slug/#{new_tenant_slug}.json")
+        
+        new_tenant = Tenant.find_by_slug(new_tenant_slug)
+        assert_not_nil new_tenant, "A remote tenant was not found with the slug #{new_tenant_slug.inspect}"
+      end
+    end
+  end
+  
+  test "should be able to find resources by different attributes and specify a path" do
+    new_tenant_name = "JohnnyG"
+    
+    assert_equal 0, Tenant.where(:name => new_tenant_name).count,
+      "There's not supposed to be a Tenant with the name #{new_tenant_name}."
+    
+    assert_difference "Tenant.count", +1 do
+      RemoteTenant.run_simulation do |s|
+        s.show(nil, {
+          :id => 46,
+          :slug => "not_found",
+          :church_name => new_tenant_name
+        }, :path => "/api/accounts/by_nombre/#{new_tenant_name}.json")
+        
+        new_tenant = Tenant.find_by_name(new_tenant_name)
+        assert_not_nil new_tenant, "A remote tenant was not found with the name #{new_tenant_name.inspect}"
+      end
+    end
+  end
+  
+  
+  
+  test "should create a record locally when fetching a new remote resource" do
+    new_tenant_id = 17
+    
+    assert_equal 0, Tenant.where(:remote_id => new_tenant_id).count,
+      "There's not supposed to be a Tenant with the id #{new_tenant_id}."
+    
+    assert_difference "Tenant.count", +1 do
+      RemoteTenant.run_simulation do |s|
+        s.show(new_tenant_id, {
+          :id => new_tenant_id,
           :slug => "not_found",
           :church_name => "Not Found"
-        }
+        })
         
-        s.show(nil, attrs, :path => "/api/accounts/by_slug/#{attrs[:slug]}.json")
-        
-        Tenant.find_by_slug(new_tenant_slug)
+        new_tenant = Tenant.find_by_remote_id(new_tenant_id)
+        assert_not_nil new_tenant, "A remote tenant was not found with the id #{new_tenant_id.inspect}"
       end
     end
   end
@@ -34,16 +93,14 @@ class RemotableTest < ActiveSupport::TestCase
     tenant = Factory(:tenant, :expires_at => 100.years.from_now)
     unexpected_name = "Totally Wonky"
     
-    Tenant::RemoteTenant.run_simulation do |s|
-      attrs = {
-        :id => tenant.id,
+    RemoteTenant.run_simulation do |s|
+      s.show(tenant.remote_id, {
+        :id => tenant.remote_id,
         :slug => tenant.slug,
         :church_name => unexpected_name
-      }
+      })
       
-      s.show(nil, attrs, :path => "/api/accounts/by_slug/#{attrs[:slug]}.json")
-      
-      tenant = Tenant.find_by_slug(tenant.slug)
+      tenant = Tenant.find_by_remote_id(tenant.remote_id)
       assert_not_equal unexpected_name, tenant.name
     end
   end
@@ -54,16 +111,14 @@ class RemotableTest < ActiveSupport::TestCase
     tenant = Factory(:tenant, :expires_at => 1.year.ago)
     unexpected_name = "Totally Wonky"
     
-    Tenant::RemoteTenant.run_simulation do |s|
-      attrs = {
-        :id => tenant.id,
+    RemoteTenant.run_simulation do |s|
+      s.show(tenant.remote_id, {
+        :id => tenant.remote_id,
         :slug => tenant.slug,
         :church_name => unexpected_name
-      }
+      })
       
-      s.show(nil, attrs, :path => "/api/accounts/by_slug/#{attrs[:slug]}.json")
-      
-      tenant = Tenant.find_by_slug(tenant.slug)
+      tenant = Tenant.find_by_remote_id(tenant.remote_id)
       assert_equal unexpected_name, tenant.name
     end
   end
@@ -74,11 +129,10 @@ class RemotableTest < ActiveSupport::TestCase
     tenant = Factory(:tenant, :expires_at => 1.year.ago)
     
     assert_difference "Tenant.count", -1 do
-      Tenant::RemoteTenant.run_simulation do |s|
+      RemoteTenant.run_simulation do |s|
+        s.show(tenant.remote_id, nil, :status => 404)
         
-        s.show(nil, nil, :path => "/api/accounts/by_slug/#{tenant.slug}.json", :status => 404)
-        
-        tenant = Tenant.find_by_slug(tenant.slug)
+        tenant = Tenant.find_by_remote_id(tenant.remote_id)
         assert_equal nil, tenant
       end
     end
@@ -90,14 +144,13 @@ class RemotableTest < ActiveSupport::TestCase
     tenant = Factory(:tenant)
     new_name = "Totally Wonky"
     
-    Tenant::RemoteTenant.run_simulation do |s|
-      s.show(nil, {
-        :id => tenant.id,
+    RemoteTenant.run_simulation do |s|
+      s.show(tenant.remote_id, {
+        :id => tenant.remote_id,
         :slug => tenant.slug,
         :church_name => tenant.name
-        }, :path => "/api/accounts/by_slug/#{tenant.slug}.json")
-      
-      s.update(tenant.id)
+      })
+      s.update(tenant.remote_id)
       
       tenant.nosync = false
       tenant.name = "Totally Wonky"
@@ -113,14 +166,13 @@ class RemotableTest < ActiveSupport::TestCase
     tenant = Factory(:tenant)
     new_name = "Totally Wonky"
     
-    Tenant::RemoteTenant.run_simulation do |s|
-      s.show(nil, {
-          :id => tenant.id,
-          :slug => tenant.slug,
-          :church_name => tenant.name
-        }, :path => "/api/accounts/by_slug/#{tenant.slug}.json")
-      
-      s.update(tenant.id, :status => 422, :body => {
+    RemoteTenant.run_simulation do |s|
+      s.show(tenant.remote_id, {
+        :id => tenant.remote_id,
+        :slug => tenant.slug,
+        :church_name => tenant.name
+      })
+      s.update(tenant.remote_id, :status => 422, :body => {
         :errors => {:church_name => ["is already taken"]}
       })
       
@@ -141,7 +193,7 @@ class RemotableTest < ActiveSupport::TestCase
       :name => "Brand New"
     })
     
-    Tenant::RemoteTenant.run_simulation do |s|
+    RemoteTenant.run_simulation do |s|
       s.create({
         :id => 143,
         :slug => tenant.slug,
@@ -160,7 +212,7 @@ class RemotableTest < ActiveSupport::TestCase
       :name => "Brand New"
     })
     
-    Tenant::RemoteTenant.run_simulation do |s|
+    RemoteTenant.run_simulation do |s|
       s.create({
         :errors => {
           :what => ["ever"],
@@ -180,14 +232,13 @@ class RemotableTest < ActiveSupport::TestCase
   test "should destroy a record remotely when destroying one locally" do
     tenant = Factory(:tenant)
     
-    Tenant::RemoteTenant.run_simulation do |s|
-      s.show(nil, {
-          :id => tenant.id,
-          :slug => tenant.slug,
-          :church_name => tenant.name
-        }, :path => "/api/accounts/by_slug/#{tenant.slug}.json")
-      
-      s.destroy(tenant.id)
+    RemoteTenant.run_simulation do |s|
+      s.show(tenant.remote_id, {
+        :id => tenant.remote_id,
+        :slug => tenant.slug,
+        :church_name => tenant.name
+      })
+      s.destroy(tenant.remote_id)
       
       tenant.nosync = false
       tenant.destroy
@@ -199,14 +250,14 @@ class RemotableTest < ActiveSupport::TestCase
   test "should fail to destroy a record locally when failing to destroy one remotely" do
     tenant = Factory(:tenant)
     
-    Tenant::RemoteTenant.run_simulation do |s|
-      s.show(nil, {
-          :id => tenant.id,
-          :slug => tenant.slug,
-          :church_name => tenant.name
-        }, :path => "/api/accounts/by_slug/#{tenant.slug}.json")
+    RemoteTenant.run_simulation do |s|
+      s.show(tenant.remote_id, {
+        :id => tenant.remote_id,
+        :slug => tenant.slug,
+        :church_name => tenant.name
+      })
       
-      s.destroy(tenant.id, :status => 500)
+      s.destroy(tenant.remote_id, :status => 500)
       
       tenant.nosync = false
       assert_raises(ActiveResource::ServerError) do

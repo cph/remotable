@@ -1,4 +1,4 @@
-require 'active_resource'
+require "active_resource"
 
 
 module ActiveResourceFixes

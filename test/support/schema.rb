@@ -13,12 +13,12 @@
 ActiveRecord::Schema.define(:version => 20110507152635) do
 
   create_table "tenants", :force => true do |t|
-    t.string   "slug",       :null => false
-    t.string   "name",       :null => false
-    t.boolean  "active"
+    t.string   "slug"
+    t.string   "name"
+    t.integer  "remote_id"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.datetime "expires_at"
+    t.datetime "expires_at", :null => false
   end
 
 end

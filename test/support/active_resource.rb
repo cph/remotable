@@ -1,32 +1,43 @@
-require 'active_record'
-require 'active_resource'
+require "active_record"
+require "active_resource"
+
+
+class RemoteTenant < ActiveResource::Base
+  self.site                 = "http://example.com/api/"
+  self.element_name         = "account"
+  self.format               = :json
+  self.include_root_in_json = false
+  self.user                 = "username"
+  self.password             = "password"
+end
 
 class Tenant < ActiveRecord::Base
-  include Remotable
+  remote_model RemoteTenant
+  attr_remote :slug, :church_name => :name, :id => :remote_id
+  find_by :slug
+  find_by :name => "by_nombre/:name.json"
+end
+
+
+
+class RemoteTenant2 < ActiveResource::Base
+end
+
+class RemoteWithoutKey < ActiveRecord::Base
+  set_table_name "tenants"
   
-  attr_remote :slug, :church_name => :name, :active_unite_account => :active
-  fetch_with :slug
+  remote_model RemoteTenant2
+  attr_remote :id => :remote_id
+end
+
+
+class RemoteTenant3 < ActiveResource::Base
+end
+
+class RemoteWithKey < ActiveRecord::Base
+  set_table_name "tenants"
   
-  class RemoteTenant < ActiveResource::Base
-    
-    self.site                 = "http://example.com/api/"
-    self.element_name         = "account"
-    self.format               = :json
-    self.include_root_in_json = false
-    self.user                 = "username"
-    self.password             = "password"
-    
-    class << self
-      def find_by_slug!(slug)
-        find(:one, :from => "/api/accounts/by_slug/#{slug}.json")
-      end
-      
-      def find_by_slug(slug)
-        find_by_slug!(slug)
-      rescue ActiveResource::ResourceNotFound
-        nil
-      end
-    end
-    
-  end
+  remote_model RemoteTenant3
+  attr_remote :slug
+  remote_key :slug
 end
