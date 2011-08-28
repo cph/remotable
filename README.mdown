@@ -1,0 +1,103 @@
+# Remotable
+
+Remotable associates an ActiveRecord model with a remote resource (like an ActiveResource model) and keeps the two synchronized.
+
+- When a local record is loaded, Remotable ensures that it is up-to-date.
+- When a local record is requested (by an ActiveRecord `find_by_` method) but not found, Remotable fetches the remote resource and creates a local copy.
+- When a local record is created, updated, or destroyed, Remotable ensures that the corresponding remote resource is created, updated, or destroyed.
+
+## Using Remotable
+
+### Installation
+
+Just add the following to your Gemfile:
+
+    gem "remotable"
+
+### Getting Started
+
+**1.** Remotable requires that your local model have an `expires_at` column.
+
+    class AddExpiresAtToTenants < ActiveRecord::Migration
+      def self.up
+        add_column :tenants, :expires_at, :timestamp, :null => false
+      end
+    end
+
+**2.** Your local model has to be associated with a remote model: (Let's say `RemoteTenant` is the name of an ActiveResource model.)
+
+    class Tenant < ActiveRecord::Base
+      remote_model RemoteTenant
+    end
+
+
+### Configuration
+
+Specify the attributes of the local model that you want to keep in sync with the remote model. You can also specify mappings by using the hash rocket. The line `:customer_name => :name` tells Remotable to keep `RemoteTenant#customer_name` in sync with `Tenant#name`.
+
+    class Tenant < ActiveRecord::Base
+      remote_model RemoteTenant
+      attr_remote :slug,
+                  :customer_name => :name,
+                  :id => :remote_id
+    end
+
+By default Remotable assumes that the local model and remote model are joined with the connection you would express in SQL this way: `local_model INNER JOIN remote_model ON local_model.id=remote_model.id`. But it is generally impractical to join on `local_model.id`.
+
+If you specify `attr_remote :id => :remote_id`, then the join will be on `local_model.remote_id=remote_model.id`, but you can also use a different attribute as the join key:
+
+    class Tenant < ActiveRecord::Base
+      remote_model RemoteTenant
+      attr_remote :slug,
+                  :customer_name => :name,
+                  :id => :remote_id
+      remote_key  :slug
+    end
+
+Now, the join could be expressed this way: `local_model.slug=remote_model.slug`.
+
+### Finders
+
+For all of the local attributes that you've remoted (`slug`, `name`, and `remote_id` in the example above), the remoted model will respond to custom finders (e.g. `find_by_slug`, `find_by_name`, and `find_by_remote_id`). These finders will _first_ look in the local database for the requested record and, if it isn't found, look for the resource remotely. If a finder finds the resource remotely, it creates a local copy and returns that.
+
+Without any further configuration, Remotable will assume the route to for the customer finder from the attribute. For example,
+
+    find_by_id(...)            # Looks in api_path/tenants/:id
+    find_by_slug(...)          # Looks in api_path/tenants/by_slug/:slug
+    find_by_customer_name(...) # Looks in api_path/tenants/by_customer_name/:customer_name
+
+You can specify a custom path with the `find_by` method or you can always write an appropriate `find_by_whatever` method on your remote resource.
+
+    class Tenant < ActiveRecord::Base
+      remote_model RemoteTenant
+      attr_remote :slug,
+                  :customer_name => :name,
+                  :id => :remote_id
+      find_by :name, :path => "by_nombre/:name"
+    end
+
+When you use `find_by`, give the name of the _local_ attribute not the remote one (if they differ). Also, the name of the symbolic part of the path should match the local attribute name as well.
+
+### Expiration
+
+Whenever a remoted record is instantiated, Remotable checks the value of its `expires_at` attribute. If the date is in the past, Remotable pulls changes from the remote resource. Whenever a record is saved, `expires_at` is set to a time in the future&mdash;by default, 1 day. You can change how frequently a record expires by setting `expires_after` to a duration:
+
+    class Tenant < ActiveRecord::Base
+      remote_model RemoteTenant
+      expires_after 1.hour
+    end
+
+### Adapters
+
+Remotable checks class you hand to `remote_model` to see what it inherits from. Remotable checks this to use the correct adapter with the remote model. Currently, the only adapter included in Remotable is for ActiveResource::Base.
+
+## Development
+
+### To Do
+
+ - Add additional adapters
+ - Write a generator
+
+### License
+
+Remotable is available under the terms of the MIT license.
