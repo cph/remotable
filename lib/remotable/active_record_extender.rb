@@ -53,6 +53,9 @@ module Remotable
         map = attrs.extract_options!
         map = attrs.map_to_self(map)
         @remote_attribute_map = map
+        
+        @remote_attribute_routes = {}
+        fetch_with(*local_attribute_names)
       end
       
       def fetch_with(*local_keys)
