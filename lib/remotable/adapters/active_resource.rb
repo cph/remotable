@@ -1,4 +1,5 @@
 require "remotable/active_resource_fixes"
+require "remotable/core_ext/uri"
 require "active_support/concern"
 
 
@@ -35,7 +36,7 @@ module Remotable
           route = route_for(local_key)
           path = route.gsub(/:#{local_key}/, value.to_s)
           if relative_path?(path)
-            join_url_segments(prefix, collection_name, "#{path}.#{format.extension}")
+            URI.join_url_segments(prefix, collection_name, "#{path}.#{format.extension}")
           else
             path
           end
@@ -49,10 +50,6 @@ module Remotable
         
         def relative_path?(path)
           !(path.start_with?("/") || path["://"])
-        end
-        
-        def join_url_segments(*segments)
-          segments.flatten.join("/").gsub(/\/+/, "/")
         end
         
         
