@@ -51,7 +51,7 @@ module Remotable
       
       def attr_remote(*attrs)
         map = attrs.extract_options!
-        map = attrs.map_to_self(map)
+        map = attrs.map_to_self.merge(map)
         @remote_attribute_map = map
         
         @remote_attribute_routes = {}
