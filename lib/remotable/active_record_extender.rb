@@ -127,11 +127,8 @@ module Remotable
                      # primary key if we're evaluating a finder
           
           if remote_attribute_routes.key?(remote_attr)
-            local_resource = where(local_attr => value).first
-            unless local_resource
-              remote_resource = remote_model.find_by(remote_attr, value)
-              local_resource = new_from_remote(remote_resource) if remote_resource
-            end
+            local_resource = where(local_attr => value).first ||
+                             fetch_by(remote_attr, value)
             
             raise ActiveRecord::RecordNotFound if local_resource.nil? && bang
             return local_resource
@@ -145,6 +142,16 @@ module Remotable
       
       def expire_all!
         update_all(["expires_at=?", 1.day.ago])
+      end
+      
+      
+      
+      # Looks the resource up remotely, by the given attribute
+      # If the resource is found, wraps it in a new local resource
+      # and returns that.
+      def fetch_by(remote_attr, value)
+        remote_resource = remote_model.find_by(remote_attr, value)
+        remote_resource && new_from_remote(remote_resource)
       end
       
       
