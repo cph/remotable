@@ -143,6 +143,12 @@ module Remotable
       
       
       
+      def expire_all!
+        update_all(["expires_at=?", 1.day.ago])
+      end
+      
+      
+      
     private
       
       
