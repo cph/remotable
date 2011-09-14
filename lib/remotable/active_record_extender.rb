@@ -257,7 +257,7 @@ module Remotable
     end
     
     def nosync?
-      @nosync == true
+      Remotable.nosync? || (@nosync == true)
     end
     
     

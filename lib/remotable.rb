@@ -31,6 +31,30 @@ module Remotable
   
   
   
+  class << self
+    def nosync!
+      @nosync = true
+    end
+    
+    def nosync
+      value = @nosync
+      @nosync = true
+      yield
+    ensure
+      @nosync = value
+    end
+    
+    def nosync=(val)
+      @nosync = (val == true)
+    end
+    
+    def nosync?
+      @nosync == true
+    end
+  end
+  
+  
+  
   def remote_model(*args)
     if args.any?
       @remote_model = args.first
