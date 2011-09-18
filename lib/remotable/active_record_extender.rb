@@ -5,6 +5,11 @@ require "active_support/concern"
 module Remotable
   module ActiveRecordExtender
     extend ActiveSupport::Concern
+    include Nosync
+    
+    def nosync?
+      self.class.nosync? || super
+    end
     
     
     
@@ -28,6 +33,11 @@ module Remotable
     
     
     module ClassMethods
+      include Nosync
+      
+      def nosync?
+        Remotable.nosync? || super
+      end
       
       def remote_key(*args)
         if args.any?
@@ -238,28 +248,6 @@ module Remotable
     
     def any_remote_changes?
       (changed.map(&:to_sym) & local_attribute_names).any?
-    end
-    
-    
-    
-    def nosync!
-      @nosync = true
-    end
-    
-    def nosync
-      value = @nosync
-      @nosync = true
-      yield
-    ensure
-      @nosync = value
-    end
-    
-    def nosync=(val)
-      @nosync = (val == true)
-    end
-    
-    def nosync?
-      Remotable.nosync? || (@nosync == true)
     end
     
     

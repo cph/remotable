@@ -1,4 +1,5 @@
 require "remotable/version"
+require "remotable/nosync"
 
 
 # Remotable keeps a locally-stored ActiveRecord
@@ -28,30 +29,7 @@ require "remotable/version"
 #
 #
 module Remotable
-  
-  
-  
-  class << self
-    def nosync!
-      @nosync = true
-    end
-    
-    def nosync
-      value = @nosync
-      @nosync = true
-      yield
-    ensure
-      @nosync = value
-    end
-    
-    def nosync=(val)
-      @nosync = (val == true)
-    end
-    
-    def nosync?
-      @nosync == true
-    end
-  end
+  extend Nosync
   
   
   
