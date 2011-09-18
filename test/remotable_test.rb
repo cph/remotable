@@ -45,6 +45,43 @@ class RemotableTest < ActiveSupport::TestCase
     end
   end
   
+  test "should be able to find resources with the bang method" do
+    new_tenant_slug = "not_found2"
+    
+    assert_equal 0, Tenant.where(:slug => new_tenant_slug).count,
+      "There's not supposed to be a Tenant with the slug #{new_tenant_slug}."
+    
+    assert_difference "Tenant.count", +1 do
+      RemoteTenant.run_simulation do |s|
+        s.show(nil, {
+          :id => 46,
+          :slug => new_tenant_slug,
+          :church_name => "Not Found"
+        }, :path => "/api/accounts/by_slug/#{new_tenant_slug}.json")
+        
+        new_tenant = Tenant.find_by_slug!(new_tenant_slug)
+        assert_not_nil new_tenant, "A remote tenant was not found with the slug #{new_tenant_slug.inspect}"
+      end
+    end
+  end
+  
+  test "if a resource is neither local nor remote, raise an exception with the bang method" do
+    new_tenant_slug = "not_found3"
+    
+    assert_equal 0, Tenant.where(:slug => new_tenant_slug).count,
+      "There's not supposed to be a Tenant with the slug #{new_tenant_slug}."
+    
+    RemoteTenant.run_simulation do |s|
+      s.show(nil, nil, :status => 404, :path => "/api/accounts/by_slug/#{new_tenant_slug}.json")
+      
+      assert_raises ActiveRecord::RecordNotFound do
+        Tenant.find_by_slug!(new_tenant_slug)
+      end
+    end
+  end
+  
+  
+  
   test "should be able to find resources by different attributes and specify a path" do
     new_tenant_name = "JohnnyG"
     

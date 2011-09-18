@@ -131,7 +131,7 @@ module Remotable
       def method_missing(method_sym, *args, &block)
         method_name = method_sym.to_s
         
-        if method_name =~ /find_by_(.*)(!?)/
+        if method_name =~ /find_by_([^!]*)(!?)/
           local_attr, bang, value = $1.to_sym, !$2.blank?, args.first
           remote_attr = remote_attribute_name(local_attr)
           
