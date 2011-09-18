@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "factory_girl"
   s.add_development_dependency "sqlite3"
   s.add_development_dependency "active_resource_simulator"
+  s.add_development_dependency "simplecov"
   
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
