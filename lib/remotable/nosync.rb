@@ -1,4 +1,3 @@
-
 module Remotable
   module Nosync
     

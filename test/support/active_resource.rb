@@ -30,6 +30,7 @@ class RemoteWithoutKey < ActiveRecord::Base
 end
 
 
+
 class RemoteTenant3 < ActiveResource::Base
 end
 
