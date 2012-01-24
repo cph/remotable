@@ -5,6 +5,7 @@ require 'rails/test_help'
 require 'active_support/core_ext'
 require 'factory_girl'
 require 'turn'
+require 'database_cleaner'
 
 
 require 'active_record'
@@ -18,3 +19,15 @@ load File.join(File.dirname(__FILE__), "support", "schema.rb")
 
 
 require 'factories/tenants'
+
+
+DatabaseCleaner.strategy = :transaction
+
+class ActiveSupport::TestCase
+  setup do
+    DatabaseCleaner.start
+  end
+  teardown do
+    DatabaseCleaner.clean
+  end
+end

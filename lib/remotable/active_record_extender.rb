@@ -65,6 +65,8 @@ module Remotable
         map = attrs.map_to_self.merge(map)
         @remote_attribute_map = map
         
+        assert_that_remote_resource_responds_to_remote_attributes!(remote_model) if Remotable.validate_models?
+        
         @remote_attribute_routes = {}
         fetch_with(*local_attribute_names)
       end
@@ -192,16 +194,44 @@ module Remotable
       
       
       def extend_remote_model
-        if remote_model < ActiveResource::Base
+        if remote_model.is_a?(Class) and (remote_model < ActiveResource::Base)
           require "remotable/adapters/active_resource"
           remote_model.send(:include, Remotable::Adapters::ActiveResource)
         
-        # !todo
+        #
         # Adapters for other API consumers can be implemented here
         #
         
         else
-          raise("#{remote_model} is not a recognized remote resource")
+          assert_that_remote_model_meets_api_requirements!(remote_model) if Remotable.validate_models?
+        end
+      end
+      
+      def assert_that_remote_resource_responds_to_remote_attributes!(model)
+        # Skip this for ActiveResource because it won't define a method until it has
+        # loaded an JSON for that method
+        return if model.is_a?(Class) and (model < ActiveResource::Base) 
+        
+        instance = model.new_resource
+        attr_getters_and_setters = remote_attribute_names + remote_attribute_names.map {|attr| :"#{attr}="}
+        unless instance.respond_to_all?(attr_getters_and_setters)
+          raise InvalidRemoteModel,
+            "#{instance.class} does not respond to getters and setters " <<
+            "for each remote attribute (not implemented: #{instance.does_not_respond_to(attr_getters_and_setters).sort.join(", ")}).\n"
+        end
+      end
+      
+      def assert_that_remote_model_meets_api_requirements!(model)
+        unless model.respond_to_all?(REQUIRED_CLASS_METHODS)
+          raise InvalidRemoteModel,
+            "#{model} cannot be used as a remote model with Remotable " <<
+            "because it does not define these methods: #{model.does_not_respond_to(REQUIRED_CLASS_METHODS).join(", ")}."
+        end
+        instance = model.new_resource
+        unless instance.respond_to_all?(REQUIRED_INSTANCE_METHODS)
+          raise InvalidRemoteModel,
+            "#{instance.class} cannot be used as a remote resource with Remotable " <<
+            "because it does not define these methods: #{instance.does_not_respond_to(REQUIRED_INSTANCE_METHODS).join(", ")}."
         end
       end
       
