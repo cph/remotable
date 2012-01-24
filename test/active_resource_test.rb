@@ -2,9 +2,11 @@ require "test_helper"
 require "remotable"
 require "support/active_resource"
 require "active_resource_simulator"
+require "rr"
 
 
 class ActiveResourceTest < ActiveSupport::TestCase
+  include RR::Adapters::TestUnit
   
   test "should make an absolute path and add the format" do
     assert_equal "/api/accounts/by_slug/value.json",   RemoteTenant.expanded_path_for("by_slug/value")
@@ -145,15 +147,15 @@ class ActiveResourceTest < ActiveSupport::TestCase
         :slug => tenant.slug,
         :church_name => tenant.name
       })
-      s.update(tenant.remote_id)
       
       tenant.nosync = false
       tenant.name = "Totally Wonky"
       assert_equal true, tenant.any_remote_changes?
       
-      tenant.save!
+      # Throws an error if save is not called on the remote resource
+      mock(tenant.remote_resource).save { true }
       
-      pending "Not sure how to test that an update happened"
+      tenant.save!
     end
   end
   
@@ -262,12 +264,12 @@ class ActiveResourceTest < ActiveSupport::TestCase
         :slug => tenant.slug,
         :church_name => tenant.name
       })
-      s.destroy(tenant.remote_id)
+      
+      # Throws an error if save is not called on the remote resource
+      mock(tenant.remote_resource).destroy { true }
       
       tenant.nosync = false
       tenant.destroy
-      
-      pending # how do I check for this?
     end
   end
   
