@@ -2,6 +2,21 @@ require "active_resource"
 
 
 module ActiveResourceFixes
+  
+  # ActiveResource hacks method_missing without hacking respond_to?
+  # In fact, it responds to any method that ends in an equals sign.
+  # It also responds to any method that matches an attribute name.
+  def respond_to?(method_symbol, include_private=false)
+    method_name = method_symbol.to_s
+    if method_name =~ /\w+=/
+      true
+    elsif attributes.include?(method_name)
+      true
+    else
+      super(method_symbol, include_private)
+    end
+  end
+  
 end
 
 
