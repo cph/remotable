@@ -91,6 +91,21 @@ Whenever a remoted record is instantiated, Remotable checks the value of its `ex
 
 Remotable checks class you hand to `remote_model` to see what it inherits from. Remotable checks this to use the correct adapter with the remote model. Currently, the only adapter included in Remotable is for ActiveResource::Base.
 
+### Custom Backends / Adapters
+
+You can write your own backends for Remotable. Just hand `remote_model` an object which responds to two methods: `new_resource` and `find_by`.
+
+ * `new_resource` should take 0 arguments and return an uninitialized object which represents a remote resource.
+ * `find_by` &mdash; either `find_by(path)` or `find_by(remote_attr, value)` &mdash; should take either 1 or 2 arguments. If it takes 1 argument, it will be passed the relative path of a remote resource. If it takes 2 arguments, it will be passed an attribute name and value to be used to look up a remote resource. `find_by` should return either a single remote resource or nil (if none could be found).
+
+The instances of a remote resource must also respond to certain methods. Instance should respond to:
+
+ * `save` (return true if successful, false if not)
+ * `destroy`
+ * `errors` (a hash of errors to be populated by an unsuccessful save)
+ * the getters and setters for all attributes which will be synchronized remotely
+
+
 ## Development
 
 ### To Do
