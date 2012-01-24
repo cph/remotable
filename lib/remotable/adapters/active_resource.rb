@@ -16,12 +16,12 @@ module Remotable
         end
         
         
-        def find_by!(path, key, value)
+        def find_by!(path)
           find(:one, :from => expanded_path_for(path))
         end
         
-        def find_by(path, key, value)
-          find_by!(path, key, value)
+        def find_by(path)
+          find_by!(path)
         rescue ::ActiveResource::ResourceNotFound
           nil
         end

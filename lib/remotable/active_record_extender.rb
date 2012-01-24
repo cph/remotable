@@ -169,8 +169,13 @@ module Remotable
       # Looks the resource up remotely;
       # Returns the remote resource.
       def find_remote_resource_by(remote_attr, value)
-        path = remote_path_for(remote_attr, value)
-        remote_model.find_by(path, remote_attr, value)
+        find_by = remote_model.method(:find_by)
+        case find_by.arity
+        when 1; find_by.call(remote_path_for(remote_attr, value))
+        when 2; find_by.call(remote_attr, value)
+        else
+          raise InvalidRemoteModel, "#{remote_model}.find_by should take either 1 or 2 parameters"
+        end
       end
       
       def remote_path_for(remote_key, value)
