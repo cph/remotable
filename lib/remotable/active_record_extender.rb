@@ -162,8 +162,21 @@ module Remotable
       # If the resource is found, wraps it in a new local resource
       # and returns that.
       def fetch_by(remote_attr, value)
-        remote_resource = remote_model.find_by(remote_attr, value)
+        remote_resource = find_remote_resource_by(remote_attr, value)
         remote_resource && new_from_remote(remote_resource)
+      end
+      
+      # Looks the resource up remotely;
+      # Returns the remote resource.
+      def find_remote_resource_by(remote_attr, value)
+        path = remote_path_for(remote_attr, value)
+        remote_model.find_by(path, remote_attr, value)
+      end
+      
+      def remote_path_for(remote_key, value)
+        local_key = local_attribute_name(remote_key)
+        route = route_for(local_key)
+        route.gsub(/:#{local_key}/, value.to_s)
       end
       
       
@@ -176,7 +189,6 @@ module Remotable
         if remote_model < ActiveResource::Base
           require "remotable/adapters/active_resource"
           remote_model.send(:include, Remotable::Adapters::ActiveResource)
-          remote_model.local_model = self
         
         # !todo
         # Adapters for other API consumers can be implemented here
@@ -224,6 +236,7 @@ module Remotable
              :local_attribute_names,
              :local_attribute_name,
              :expires_after,
+             :find_remote_resource_by,
              :to => "self.class"
     
     def expired?
@@ -256,7 +269,7 @@ module Remotable
     
     def fetch_remote_resource
       fetch_value = self[local_key]
-      remote_model.find_by(remote_key, fetch_value)
+      find_remote_resource_by(remote_key, fetch_value)
     end
     
     def merge_remote_data!(remote_resource)

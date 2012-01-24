@@ -11,30 +11,20 @@ module Remotable
       module ClassMethods
         
         
-        attr_accessor :local_model
-        
-        delegate :local_attribute_name,
-                 :route_for,
-                 :to => :local_model
         
         
-        
-        def find_by!(key, value)
-          find(:one, :from => path_for(key, value))
+        def find_by!(path, key, value)
+          find(:one, :from => expanded_path_for(path))
         end
         
-        def find_by(key, value)
-          find_by!(key, value)
+        def find_by(path, key, value)
+          find_by!(path, key, value)
         rescue ::ActiveResource::ResourceNotFound
           nil
         end
         
         
-        
-        def path_for(remote_key, value)
-          local_key = local_attribute_name(remote_key)
-          route = route_for(local_key)
-          path = route.gsub(/:#{local_key}/, value.to_s)
+        def expanded_path_for(path)
           if relative_path?(path)
             URI.join_url_segments(prefix, collection_name, "#{path}.#{format.extension}")
           else
@@ -43,9 +33,7 @@ module Remotable
         end
         
         
-        
       private
-        
         
         
         def relative_path?(path)
@@ -53,9 +41,7 @@ module Remotable
         end
         
         
-        
       end
-      
     end
   end
 end

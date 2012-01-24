@@ -19,8 +19,8 @@ class RemotableTest < ActiveSupport::TestCase
   end
   
   test "should be able to generate paths for with different attributes" do
-    assert_equal "/api/accounts/by_slug/value.json",   RemoteTenant.path_for(:slug, "value")
-    assert_equal "/api/accounts/by_nombre/value.json", RemoteTenant.path_for(:name, "value")
+    assert_equal "by_slug/value",   Tenant.remote_path_for(:slug, "value")
+    assert_equal "by_nombre/value", Tenant.remote_path_for(:name, "value")
   end
   
   
