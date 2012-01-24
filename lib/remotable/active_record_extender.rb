@@ -1,5 +1,6 @@
 require "remotable/core_ext"
 require "active_support/concern"
+require "active_support/core_ext/array/wrap"
 
 
 module Remotable
@@ -341,8 +342,10 @@ module Remotable
     
     
     def merge_remote_errors(errors)
-      errors.each do |attribute, message|
-        self.errors[local_attribute_name(attribute)] = message
+      errors.each do |attribute, messages|
+        Array.wrap(messages).each do |message|
+          self.errors.add(local_attribute_name(attribute), message)
+        end
       end
       self
     end
