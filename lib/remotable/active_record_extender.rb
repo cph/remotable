@@ -298,7 +298,7 @@ module Remotable
     end
     
     def create_remote_resource
-      @remote_resource = remote_model.new
+      @remote_resource = remote_model.new_resource
       merge_local_data(@remote_resource)
       
       if @remote_resource.save

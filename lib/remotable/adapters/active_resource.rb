@@ -11,6 +11,9 @@ module Remotable
       module ClassMethods
         
         
+        def new_resource
+          new
+        end
         
         
         def find_by!(path, key, value)
