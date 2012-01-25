@@ -38,6 +38,28 @@ class ActiveResourceTest < ActiveSupport::TestCase
     end
   end
   
+  test "should be able to find resources with a composite key" do
+    group_id = 5
+    slug = "not_found"
+    
+    assert_equal 0, RemoteWithCompositeKey.where(:group_id => group_id, :slug => slug).count,
+      "There's not supposed to be a Tenant with the group_id #{group_id} and the slug #{slug}."
+    
+    assert_difference "RemoteWithCompositeKey.count", +1 do
+      RemoteTenant.run_simulation do |s|
+        s.show(nil, {
+          :id => 46,
+          :group_id => group_id,
+          :slug => slug,
+          :church_name => "Not Found"
+        }, :path => "/api/accounts/groups/#{group_id}/tenants/#{slug}.json")
+        
+        new_tenant = RemoteWithCompositeKey.find_by_group_id_and_slug(group_id, slug)
+        assert_not_nil new_tenant, "A remote tenant was not found with the group_id #{group_id} and the slug #{slug}."
+      end
+    end
+  end
+  
   test "should be able to find resources with the bang method" do
     new_tenant_slug = "not_found2"
     

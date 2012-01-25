@@ -42,7 +42,9 @@ Specify the attributes of the local model that you want to keep in sync with the
                   :id => :remote_id
     end
 
-By default Remotable assumes that the local model and remote model are joined with the connection you would express in SQL this way: `local_model INNER JOIN remote_model ON local_model.id=remote_model.id`. But it is generally impractical to join on `local_model.id`.
+### Remote Keys
+
+By default Remotable assumes that the local model and remote model are joined with the connection you might express in SQL this way: `local_model INNER JOIN remote_model ON local_model.id=remote_model.id`. But it is generally impractical to join on `local_model.id`.
 
 If you specify `attr_remote :id => :remote_id`, then the join will be on `local_model.remote_id=remote_model.id`, but you can also use a different attribute as the join key:
 
@@ -56,17 +58,39 @@ If you specify `attr_remote :id => :remote_id`, then the join will be on `local_
 
 Now, the join could be expressed this way: `local_model.slug=remote_model.slug`.
 
+If you must look up a remote model with more than one attribute, you can express a composite key this way:
+
+    class Event < ActiveRecord::Base
+      remote_model RemoteEvent
+      attr_remote :calendar_id,
+                  :id => :remote_id
+      remote_key  [:calendar_id, :remote_id]
+    end
+
 ### Finders
 
-For all of the local attributes that you've remoted (`slug`, `name`, and `remote_id` in the example above), the remoted model will respond to custom finders (e.g. `find_by_slug`, `find_by_name`, and `find_by_remote_id`). These finders will _first_ look in the local database for the requested record and, if it isn't found, look for the resource remotely. If a finder finds the resource remotely, it creates a local copy and returns that.
+For `:id` or whatever you chose to be the remote key, Remotable will create a finder method on the ActiveRecord model. These finders will _first_ look in the local database for the requested record and, if it isn't found, look for the resource remotely. If a finder finds the resource remotely, it creates a local copy and returns that.
 
-Without any further configuration, Remotable will assume the route to for the customer finder from the attribute. For example,
+You can create additional finder with the `find_by` method:
 
-    find_by_id(...)            # Looks in api_path/tenants/:id
-    find_by_slug(...)          # Looks in api_path/tenants/by_slug/:slug
-    find_by_customer_name(...) # Looks in api_path/tenants/by_customer_name/:customer_name
+    class Tenant < ActiveRecord::Base
+      remote_model RemoteTenant
+      attr_remote :slug,
+                  :customer_name => :name,
+                  :id => :remote_id
+      find_by :slug
+      find_by :name
+    end
 
-You can specify a custom path with the `find_by` method or you can always write an appropriate `find_by_whatever` method on your remote resource.
+Remotable will create the following methods and assume the URI for the custom finders from the attribute. The example above will create the following methods:
+
+    find_by_remote_id(...)    # Looks in api_path/tenants/:id
+    find_by_slug(...)         # Looks in api_path/tenants/by_slug/:slug
+    find_by_name(...)         # Looks in api_path/tenants/by_name/:name
+
+Note that the finder methods are named with the _local_ attributes.
+
+You can specify a custom path with the `find_by` method:
 
     class Tenant < ActiveRecord::Base
       remote_model RemoteTenant
@@ -75,6 +99,7 @@ You can specify a custom path with the `find_by` method or you can always write 
                   :id => :remote_id
       find_by :name, :path => "by_nombre/:name"
     end
+
 
 When you use `find_by`, give the name of the _local_ attribute not the remote one (if they differ). Also, the name of the symbolic part of the path should match the local attribute name as well.
 

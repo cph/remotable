@@ -25,7 +25,7 @@ module Remotable
       
       default_remote_attributes = column_names - %w{id created_at updated_at expires_at}
       @remote_attribute_map = default_remote_attributes.map_to_self
-      @remote_attribute_routes = {}
+      @local_attribute_routes = {}
       @expires_after = 1.day
       
       extend_remote_model
@@ -40,24 +40,44 @@ module Remotable
         Remotable.nosync? || super
       end
       
+      # Sets the key with which a resource is identified remotely.
+      # If no remote key is set, the remote key is assumed to be :id.
+      # Which could be explicitly set like this:
+      #
+      #     remote_key :id
+      #
+      # It can can be a composite key:
+      #
+      #     remote_key [:calendar_id, :id]
+      #
+      # You can also supply a path for the remote key which will
+      # be passed to +fetch_with+:
+      #
+      #     remote_key [:calendar_id, :id], :path => "calendars/:calendar_id/events/:id"
+      #
       def remote_key(*args)
         if args.any?
-          remote_key = args.first
-          raise("#{remote_key} is not the name of a remote attribute") unless remote_attribute_names.member?(remote_key)
+          remote_key = args.shift
+          options = args.shift || {}
+          
+          # remote_key may be a composite of several attributes
+          # ensure that all of the attributs have been defined
+          Array.wrap(remote_key).each do |attribute|
+            raise(":#{attribute} is not the name of a remote attribute") unless remote_attribute_names.member?(attribute)
+          end
+          
+          # Set up a finder method for the remote_key
+          fetch_with(local_key(remote_key), options)
+          
           @remote_key = remote_key
-          fetch_with(remote_key)
-          remote_key
         else
           @remote_key || generate_default_remote_key
         end
       end
       
       def expires_after(*args)
-        if args.any?
-          @expires_after = args.first
-        else
-          @expires_after
-        end
+        @expires_after = args.first if args.any?
+        @expires_after
       end
       
       def attr_remote(*attrs)
@@ -67,23 +87,27 @@ module Remotable
         
         assert_that_remote_resource_responds_to_remote_attributes!(remote_model) if Remotable.validate_models?
         
-        @remote_attribute_routes = {}
-        fetch_with(*local_attribute_names)
+        # Reset routes
+        @local_attribute_routes = {}
       end
       
-      def fetch_with(*local_keys)
-        remote_keys_and_routes = extract_remote_keys_and_routes(*local_keys)
-        @remote_attribute_routes.merge!(remote_keys_and_routes)
+      def fetch_with(local_key, options={})
+        @local_attribute_routes.merge!(local_key => options[:path])
       end
       alias :find_by :fetch_with
       
       
       
       attr_reader :remote_attribute_map,
-                  :remote_attribute_routes
+                  :local_attribute_routes
       
-      def local_key
-        local_attribute_name(remote_key)
+      def local_key(remote_key=nil)
+        remote_key ||= self.remote_key
+        if remote_key.is_a?(Array)
+          remote_key.map(&method(:local_attribute_name))
+        else
+          local_attribute_name(remote_key)
+        end
       end
       
       def remote_attribute_names
@@ -102,17 +126,18 @@ module Remotable
         remote_attribute_map[remote_attr] || remote_attr
       end
       
-      def route_for(local_key)
-        remote_key = remote_attribute_name(local_key)
-        remote_attribute_routes[remote_key] || default_route_for(local_key, remote_key)
+      def route_for(remote_key)
+        local_key = self.local_key(remote_key)
+        local_attribute_routes[local_key] || default_route_for(local_key, remote_key)
       end
       
       def default_route_for(local_key, remote_key=nil)
+        puts "local_key: #{local_key}; remote_key: #{remote_key}"
         remote_key ||= remote_attribute_name(local_key)
         if remote_key.to_s == primary_key
           ":#{local_key}"
         else
-          "by_#{remote_key}/:#{local_key}"
+          "by_#{local_key}/:#{local_key}"
         end
       end
       
@@ -131,26 +156,55 @@ module Remotable
       
       
       
+      def respond_to?(method_sym, include_private=false)
+        return true if recognize_remote_finder_method(method_sym)
+        super(method_sym, include_private)
+      end
+      
       def method_missing(method_sym, *args, &block)
-        method_name = method_sym.to_s
-        
-        if method_name =~ /find_by_([^!]*)(!?)/
-          local_attr, bang, value = $1.to_sym, !$2.blank?, args.first
-          remote_attr = remote_attribute_name(local_attr)
+        method_details = recognize_remote_finder_method(method_sym)
+        if method_details
+          local_attributes = method_details[:local_attributes]
+          values = args
           
-          remote_key # Make sure we've figured out the remote
-                     # primary key if we're evaluating a finder
-          
-          if remote_attribute_routes.key?(remote_attr)
-            local_resource = where(local_attr => value).first ||
-                             fetch_by(remote_attr, value)
-            
-            raise ActiveRecord::RecordNotFound if local_resource.nil? && bang
-            return local_resource
+          unless values.length == local_attributes.length
+            raise ArgumentError, "#{method_sym} was called with #{values.length} but #{local_attributes.length} was expected"
           end
+          
+          local_resource = ((0...local_attributes.length).inject(scoped) do |scope, i|
+            scope.where(local_attributes[i] => values[i])
+          end).first || fetch_by(method_details[:remote_key], *values)
+          
+          raise ActiveRecord::RecordNotFound if local_resource.nil? && (method_sym =~ /!$/)
+          local_resource
+        else
+          super(method_sym, *args, &block)
+        end
+      end
+      
+      # If the missing method IS a Remotable finder method,
+      # returns the remote key (may be a composite key).
+      # Otherwise, returns false.
+      def recognize_remote_finder_method(method_sym)
+        method_name = method_sym.to_s
+        return false unless method_name =~ /find_by_([^!]*)(!?)/
+        
+        local_attributes = $1.split("_and_").map(&:to_sym)
+        remote_attributes = local_attributes.map(&method(:remote_attribute_name))
+        
+        local_key, remote_key = if local_attributes.length == 1
+          [local_attributes[0], remote_attributes[0]]
+        else
+          [local_attributes, remote_attributes]
         end
         
-        super(method_sym, *args, &block)
+        generate_default_remote_key # <- Make sure we've figured out the remote
+                                    #    primary key if we're evaluating a finder
+        
+        return false unless local_attribute_routes.key?(local_key)
+        
+        { :local_attributes => local_attributes,
+          :remote_key => remote_key }
       end
       
       
@@ -164,27 +218,46 @@ module Remotable
       # Looks the resource up remotely, by the given attribute
       # If the resource is found, wraps it in a new local resource
       # and returns that.
-      def fetch_by(remote_attr, value)
-        remote_resource = find_remote_resource_by(remote_attr, value)
+      def fetch_by(remote_attr, *values)
+        remote_resource = find_remote_resource_by(remote_attr, *values)
         remote_resource && new_from_remote(remote_resource)
       end
       
       # Looks the resource up remotely;
       # Returns the remote resource.
-      def find_remote_resource_by(remote_attr, value)
+      def find_remote_resource_by(remote_attr, *values)
         find_by = remote_model.method(:find_by)
         case find_by.arity
-        when 1; find_by.call(remote_path_for(remote_attr, value))
-        when 2; find_by.call(remote_attr, value)
+        when 1; find_by.call(remote_path_for(remote_attr, *values))
+        when 2; find_by.call(remote_attr, *values)
         else
           raise InvalidRemoteModel, "#{remote_model}.find_by should take either 1 or 2 parameters"
         end
       end
       
-      def remote_path_for(remote_key, value)
-        local_key = local_attribute_name(remote_key)
-        route = route_for(local_key)
+      def remote_path_for(remote_key, *values)
+        route = route_for(remote_key)
+        local_key = self.local_key(remote_key)
+        
+        if remote_key.is_a?(Array)
+          remote_path_for_composite_key(route, local_key, values)
+        else
+          remote_path_for_simple_key(route, local_key, values.first)
+        end
+      end
+      
+      def remote_path_for_simple_key(route, local_key, value)
         route.gsub(/:#{local_key}/, value.to_s)
+      end
+      
+      def remote_path_for_composite_key(route, local_key, values)
+        unless values.length == local_key.length
+          raise ArgumentError, "local_key has #{local_key.length} attributes but values has #{values.length}"
+        end
+        
+        (0...values.length).inject(route) do |route, i|
+          route.gsub(/:#{local_key[i]}/, values[i].to_s)
+        end
       end
       
       
@@ -236,16 +309,8 @@ module Remotable
       end
       
       
-      def extract_remote_keys_and_routes(*local_keys)
-        keys_and_routes = local_keys.extract_options!
-        {}.tap do |hash|
-          local_keys.each {|local_key| hash[remote_attribute_name(local_key)] = nil}
-          keys_and_routes.each {|local_key, value| hash[remote_attribute_name(local_key)] = value}
-        end
-      end
-      
-      
       def generate_default_remote_key
+        return @remote_key if @remote_key
         raise("No remote key supplied and :id is not a remote attribute") unless remote_attribute_names.member?(:id)
         remote_key(:id)
       end
@@ -305,6 +370,9 @@ module Remotable
     
     def fetch_remote_resource
       fetch_value = self[local_key]
+      # puts "local_key", local_key.inspect, "",
+      #      "remote_key", remote_key.inspect, "",
+      #      "fetch_value", fetch_value
       find_remote_resource_by(remote_key, fetch_value)
     end
     

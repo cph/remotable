@@ -22,6 +22,33 @@ class RemotableTest < ActiveSupport::TestCase
     assert_equal "by_nombre/value", Tenant.remote_path_for(:name, "value")
   end
   
+  test "should be able to generate paths for composite keys" do
+    assert_equal "groups/5/tenants/test",   RemoteWithCompositeKey.remote_path_for([:group_id, :slug], 5, "test")
+  end
+  
+  
+  
+  test "should create expected finders" do
+    assert_equal true, Tenant.respond_to?(:find_by_name)
+    assert_equal true, Tenant.respond_to?(:find_by_slug)
+    assert_equal true, RemoteWithoutKey.respond_to?(:find_by_id)
+    assert_equal true, RemoteWithCompositeKey.respond_to?(:find_by_group_id_and_slug)
+  end
+  
+  
+  
+  test "should recognize a finder method with a single key" do
+    method_details = RemoteWithKey.recognize_remote_finder_method(:find_by_slug)
+    assert_not_equal false, method_details
+    assert_equal :slug, method_details[:remote_key]
+  end
+  
+  test "should recognize a finder method with a composite key" do
+    method_details = RemoteWithCompositeKey.recognize_remote_finder_method(:find_by_group_id_and_slug)
+    assert_not_equal false, method_details
+    assert_equal [:group_id, :slug], method_details[:remote_key]
+  end
+  
   
   
   # ========================================================================= #
