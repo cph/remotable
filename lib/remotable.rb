@@ -1,6 +1,7 @@
 require "remotable/version"
 require "remotable/nosync"
 require "remotable/validate_models"
+require "remotable/with_remote_model_proxy"
 
 
 # Remotable keeps a locally-stored ActiveRecord
@@ -75,10 +76,30 @@ module Remotable
     if args.any?
       @remote_model = args.first
       
-      require "remotable/active_record_extender"
-      include Remotable::ActiveRecordExtender
+      @__remotable_included ||= begin
+        require "remotable/active_record_extender"
+        include Remotable::ActiveRecordExtender
+        true
+      end
+      
+      extend_remote_model(@remote_model)
+    end
+    @remote_model
+  end
+  
+  
+  
+  def with_remote_model(model)
+    if block_given?
+      begin
+        original = self.remote_model
+        self.remote_model(model)
+        yield
+      ensure
+        self.remote_model(original)
+      end
     else
-      @remote_model
+      WithRemoteModelProxy.new(self, model)
     end
   end
   
@@ -88,6 +109,38 @@ module Remotable
   REQUIRED_INSTANCE_METHODS = [:save, :errors, :destroy]
   
   class InvalidRemoteModel < ArgumentError; end
+  
+  
+  
+private
+  
+  def extend_remote_model(remote_model)
+    if remote_model.is_a?(Class) and (remote_model < ActiveResource::Base)
+      require "remotable/adapters/active_resource"
+      remote_model.send(:include, Remotable::Adapters::ActiveResource)
+    
+    #
+    # Adapters for other API consumers can be implemented here
+    #
+    
+    else
+      assert_that_remote_model_meets_api_requirements!(remote_model) if Remotable.validate_models?
+    end
+  end
+  
+  def assert_that_remote_model_meets_api_requirements!(model)
+    unless model.respond_to_all?(REQUIRED_CLASS_METHODS)
+      raise InvalidRemoteModel,
+        "#{model} cannot be used as a remote model with Remotable " <<
+        "because it does not define these methods: #{model.does_not_respond_to(REQUIRED_CLASS_METHODS).join(", ")}."
+    end
+    instance = model.new_resource
+    unless instance.respond_to_all?(REQUIRED_INSTANCE_METHODS)
+      raise InvalidRemoteModel,
+        "#{instance.class} cannot be used as a remote resource with Remotable " <<
+        "because it does not define these methods: #{instance.does_not_respond_to(REQUIRED_INSTANCE_METHODS).join(", ")}."
+    end
+  end
   
 end
 

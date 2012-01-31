@@ -28,14 +28,30 @@ class RemotableTest < ActiveSupport::TestCase
   
   
   
+  test "should support temporary models" do
+    assert_nil BespokeTenant.find_by_slug("404")
+    assert_not_nil BespokeTenant.with_remote_model(BespokeModel2.new) { BespokeTenant.find_by_slug("404") }
+    assert_nil BespokeTenant.find_by_slug("405")
+  end
+  
+  test "should support temporary models and chainable syntax" do
+    assert_nil BespokeTenant.find_by_slug("404")
+    assert_not_nil BespokeTenant.with_remote_model(BespokeModel2.new).find_by_slug("404")
+    assert_nil BespokeTenant.find_by_slug("405")
+  end
+  
+  
+  
+  # ========================================================================= #
+  # Finders                                                                   #
+  # ========================================================================= #
+  
   test "should create expected finders" do
     assert_equal true, Tenant.respond_to?(:find_by_name)
     assert_equal true, Tenant.respond_to?(:find_by_slug)
     assert_equal true, RemoteWithoutKey.respond_to?(:find_by_id)
     assert_equal true, RemoteWithCompositeKey.respond_to?(:find_by_group_id_and_slug)
   end
-  
-  
   
   test "should recognize a finder method with a single key" do
     method_details = RemoteWithKey.recognize_remote_finder_method(:find_by_slug)

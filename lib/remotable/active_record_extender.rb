@@ -23,12 +23,9 @@ module Remotable
       
       validates_presence_of :expires_at
       
-      default_remote_attributes = column_names - %w{id created_at updated_at expires_at}
-      @remote_attribute_map = default_remote_attributes.map_to_self
-      @local_attribute_routes = {}
-      @expires_after = 1.day
-      
-      extend_remote_model
+      @remote_attribute_map ||= default_remote_attributes.map_to_self
+      @local_attribute_routes ||= {}
+      @expires_after ||= 1.day
     end
     
     
@@ -266,19 +263,11 @@ module Remotable
       
       
       
-      def extend_remote_model
-        if remote_model.is_a?(Class) and (remote_model < ActiveResource::Base)
-          require "remotable/adapters/active_resource"
-          remote_model.send(:include, Remotable::Adapters::ActiveResource)
-        
-        #
-        # Adapters for other API consumers can be implemented here
-        #
-        
-        else
-          assert_that_remote_model_meets_api_requirements!(remote_model) if Remotable.validate_models?
-        end
+      def default_remote_attributes
+        column_names - %w{id created_at updated_at expires_at}
       end
+      
+      
       
       def assert_that_remote_resource_responds_to_remote_attributes!(model)
         # Skip this for ActiveResource because it won't define a method until it has
@@ -294,19 +283,6 @@ module Remotable
         end
       end
       
-      def assert_that_remote_model_meets_api_requirements!(model)
-        unless model.respond_to_all?(REQUIRED_CLASS_METHODS)
-          raise InvalidRemoteModel,
-            "#{model} cannot be used as a remote model with Remotable " <<
-            "because it does not define these methods: #{model.does_not_respond_to(REQUIRED_CLASS_METHODS).join(", ")}."
-        end
-        instance = model.new_resource
-        unless instance.respond_to_all?(REQUIRED_INSTANCE_METHODS)
-          raise InvalidRemoteModel,
-            "#{instance.class} cannot be used as a remote resource with Remotable " <<
-            "because it does not define these methods: #{instance.does_not_respond_to(REQUIRED_INSTANCE_METHODS).join(", ")}."
-        end
-      end
       
       
       def generate_default_remote_key
@@ -316,13 +292,12 @@ module Remotable
       end
       
       
+      
       def new_from_remote(remote_resource)
         record = self.new
         record.instance_variable_set(:@remote_resource, remote_resource)
         record.pull_remote_data!
       end
-      
-      
       
     end
     

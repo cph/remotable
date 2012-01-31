@@ -13,6 +13,18 @@ class BespokeModel
   
 end
 
+class BespokeModel2
+  
+  def new_resource
+    BespokeResource.new
+  end
+  
+  def find_by(remote_attr, value)
+    BespokeResource.new(remote_attr => value)
+  end
+  
+end
+
 class BespokeResource
   
   def initialize(attributes={})
