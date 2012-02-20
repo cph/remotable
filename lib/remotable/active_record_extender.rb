@@ -326,7 +326,11 @@ module Remotable
     
     
     def pull_remote_data!
-      merge_remote_data!(remote_resource)
+      if remote_resource
+        merge_remote_data!(remote_resource)
+      elsif fetch_value
+        remote_model_has_been_destroyed!
+      end
     end
     
     
@@ -352,16 +356,14 @@ module Remotable
     end
     
     def merge_remote_data!(remote_resource)
-      if remote_resource.nil?
-        nosync { destroy }
-      
-      else
-        merge_remote_data(remote_resource)
-        reset_expiration_date
-        nosync { save! }
-      end
-      
+      merge_remote_data(remote_resource)
+      reset_expiration_date
+      nosync { save! }
       self
+    end
+    
+    def remote_model_has_been_destroyed!
+      nosync { destroy }
     end
     
     

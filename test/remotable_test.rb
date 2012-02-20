@@ -7,6 +7,10 @@ class RemotableTest < ActiveSupport::TestCase
   
   
   
+  # ========================================================================= #
+  #  Keys                                                                     #
+  # ========================================================================= #
+  
   test "should consider :id to be the remote key if none is specified" do
     assert_equal :id,         RemoteWithoutKey.remote_key
     assert_equal :remote_id,  RemoteWithoutKey.local_key
@@ -27,6 +31,10 @@ class RemotableTest < ActiveSupport::TestCase
   end
   
   
+  
+  # ========================================================================= #
+  #  Temporary remote models                                                  #
+  # ========================================================================= #
   
   test "should support temporary models" do
     assert_nil BespokeTenant.find_by_slug("404")
@@ -52,7 +60,45 @@ class RemotableTest < ActiveSupport::TestCase
   
   
   # ========================================================================= #
-  # Finders                                                                   #
+  #  Edge cases                                                               #
+  #                                                                           #
+  #  Suppose some records of a table are remoted and others aren't.           #
+  #  If a record is saved which is local-only, it's remote primary key        #
+  #  isn't stored. If this record is expired, then make sure that             #
+  #  Remotable doesn't break when it tries to look up a remote record         #
+  #  with a nil key.                                                          #
+  # ========================================================================= #
+  
+  test "should not break when refreshing a record which does not have a foreign key" do
+    tenant = Tenant.nosync { Tenant.create!(
+      :name => "Test 1",
+      :slug => "test-1",
+      :remote_id => nil,
+      :expires_at => 1.day.ago ) }
+    assert_equal nil, tenant.remote_id
+    
+    # Fetching this tenant, Remotable will want to
+    # refresh it, but it shouldn't because it can't.
+    puts "->"
+    assert_not_nil Tenant.where(:slug => "test-1").first, "A tenant with the slug \"test-1\" was not found"
+  end
+  
+  test "should not break when updating a record which does not have a foreign key" do
+    tenant = Tenant.nosync { Tenant.create!(
+      :name => "Test 1",
+      :slug => "test-1",
+      :remote_id => nil ) }
+    assert_equal nil, tenant.remote_id
+    
+    # Updating this tenatn, Remotable will want to
+    # sync it, but it shouldn't because it can't.
+    assert_equal true, tenant.update_attributes(:name => "Test 2"), "The tenant was not updated (errors: #{tenant.errors.full_messages.join(", ")})"
+  end
+  
+  
+  
+  # ========================================================================= #
+  #  Finders                                                                  #
   # ========================================================================= #
   
   test "should create expected finders" do
@@ -77,7 +123,7 @@ class RemotableTest < ActiveSupport::TestCase
   
   
   # ========================================================================= #
-  # Validating Models                                                         #
+  #  Validating Models                                                        #
   # ========================================================================= #
   
   test "should raise an exception if a remote model does not respond to all class methods" do

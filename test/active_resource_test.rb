@@ -15,7 +15,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   
   
   # ========================================================================= #
-  # Finding                                                                   #
+  #  Finding                                                                  #
   # ========================================================================= #
   
   test "should be able to find resources by different attributes" do
