@@ -343,12 +343,12 @@ module Remotable
     
   private
     
+    def fetch_value
+      self[local_key]
+    end
+    
     def fetch_remote_resource
-      fetch_value = self[local_key]
-      # puts "local_key", local_key.inspect, "",
-      #      "remote_key", remote_key.inspect, "",
-      #      "fetch_value", fetch_value
-      find_remote_resource_by(remote_key, fetch_value)
+      fetch_value && find_remote_resource_by(remote_key, fetch_value)
     end
     
     def merge_remote_data!(remote_resource)
