@@ -19,7 +19,7 @@ module Remotable
       before_create   :create_remote_resource,  :unless => :nosync?
       before_destroy  :destroy_remote_resource, :unless => :nosync?
       
-      before_validation :reset_expiration_date, :on => :create, :unless => :nosync?
+      before_validation :initialize_expiration_date, :on => :create
       
       validates_presence_of :expires_at
       
@@ -397,6 +397,10 @@ module Remotable
     end
     
     
+    
+    def initialize_expiration_date
+      reset_expiration_date unless self.expires_at
+    end
     
     def reset_expiration_date
       self.expires_at = expires_after.from_now
