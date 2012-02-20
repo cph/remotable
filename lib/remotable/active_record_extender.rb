@@ -9,7 +9,7 @@ module Remotable
     include Nosync
     
     def nosync?
-      self.class.nosync? || super
+      self.class.nosync? || self.remote_model.nil? || super
     end
     
     

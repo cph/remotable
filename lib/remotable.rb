@@ -73,7 +73,7 @@ module Remotable
   #  * getters and setters for each attribute
   #
   def remote_model(*args)
-    if args.any?
+    if args.length >= 1
       @remote_model = args.first
       
       @__remotable_included ||= begin
@@ -82,7 +82,7 @@ module Remotable
         true
       end
       
-      extend_remote_model(@remote_model)
+      extend_remote_model(@remote_model) if @remote_model
     end
     @remote_model
   end
