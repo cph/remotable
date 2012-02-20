@@ -367,7 +367,7 @@ module Remotable
     
     
     def update_remote_resource
-      if any_remote_changes?
+      if any_remote_changes? && remote_resource
         merge_local_data(remote_resource, true)
         unless remote_resource.save
           merge_remote_errors(remote_resource.errors)
