@@ -371,7 +371,9 @@ module Remotable
     def update_remote_resource
       if any_remote_changes? && remote_resource
         merge_local_data(remote_resource, true)
-        unless remote_resource.save
+        if remote_resource.save
+          merge_remote_data!(remote_resource)
+        else
           merge_remote_errors(remote_resource.errors)
           raise ActiveRecord::RecordInvalid.new(self)
         end

@@ -166,7 +166,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
     RemoteTenant.run_simulation do |s|
       s.show(tenant.remote_id, {
         :id => tenant.remote_id,
-        :slug => tenant.slug,
+        :slug => "totally-wonky",
         :church_name => tenant.name
       })
       
@@ -178,6 +178,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
       mock(tenant.remote_resource).save { true }
       
       tenant.save!
+      assert_equal "totally-wonky", tenant.slug, "After updating a record, remote data should be merge"
     end
   end
   
@@ -227,6 +228,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
       tenant.save!
       
       assert_equal true, tenant.remote_resource.persisted?
+      assert_equal 143, tenant.remote_id, "After creating a record, remote data should be merge"
     end
   end
   
