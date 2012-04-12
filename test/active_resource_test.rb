@@ -307,12 +307,14 @@ class ActiveResourceTest < ActiveSupport::TestCase
         :church_name => tenant.name
       })
       
-      s.destroy(tenant.remote_id, :status => 500)
+      s.destroy(tenant.remote_id, 
+        :body => { :errors => { :church_name => ["is already taken"] } },
+        :status => 422)
       
       tenant.nosync = false
-      assert_raises(ActiveResource::ServerError) do
-        tenant.destroy
-      end
+      tenant.destroy
+      assert_equal false, tenant.destroyed?
+      assert_equal ["is already taken"], tenant.errors[:name]
     end
   end
   

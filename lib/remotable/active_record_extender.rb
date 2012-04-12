@@ -397,7 +397,12 @@ module Remotable
     end
     
     def destroy_remote_resource
-      remote_resource && remote_resource.destroy
+      if remote_resource && remote_resource.destroy
+        true
+      else
+        merge_remote_errors(remote_resource.errors)
+        false
+      end
     end
     
     

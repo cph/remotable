@@ -1,7 +1,9 @@
 require "active_resource"
+require "active_support/concern"
 
 
 module ActiveResourceFixes
+  extend ActiveSupport::Concern
   
   # ActiveResource hacks method_missing without hacking respond_to?
   # In fact, it responds to any method that ends in an equals sign.
@@ -17,11 +19,30 @@ module ActiveResourceFixes
     end
   end
   
+  
+  included do
+    alias_method_chain :destroy, :validation
+  end
+  
+  
+  # ActiveResource::Validations overrides ActiveResource::Base#save
+  # to rescue from ActiveResource::ResourceInvalid and record the
+  # resource's errors. Do the same for `destroy`.
+  def destroy_with_validation
+    destroy_without_validation
+  rescue ActiveResource::ResourceInvalid => error
+    # cache the remote errors because every call to <tt>valid?</tt> clears
+    # all errors. We must keep a copy to add these back after local
+    # validations.
+    @remote_errors = error
+    load_remote_errors(@remote_errors, true)
+    false
+  end
+  
 end
 
 
 module ActiveResourceFixes30
-  include ActiveResourceFixes
   
   # ! in this method, don't check the Content-Type header: rack doesn't always return it
   def load_attributes_from_response(response)
@@ -34,7 +55,6 @@ end
 
 
 module ActiveResourceFixes31
-  include ActiveResourceFixes
   
   # ! in this method, don't check the Content-Type header: rack doesn't always return it
   def load_attributes_from_response(response)
@@ -52,6 +72,9 @@ if Rails.version < '3.1'
 else
   ActiveResource::Base.send(:include, ActiveResourceFixes31)
 end
+
+
+ActiveResource::Base.send(:include, ActiveResourceFixes)
 
 
 # ActiveResource expects that errors will be an array of string
