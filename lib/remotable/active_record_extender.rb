@@ -248,6 +248,7 @@ module Remotable
       end
       
       def remote_path_for_composite_key(route, local_key, values)
+        values.flatten!
         unless values.length == local_key.length
           raise ArgumentError, "local_key has #{local_key.length} attributes but values has #{values.length}"
         end

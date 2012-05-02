@@ -27,7 +27,7 @@ class RemotableTest < ActiveSupport::TestCase
   end
   
   test "should be able to generate paths for composite keys" do
-    assert_equal "groups/5/tenants/test",   RemoteWithCompositeKey.remote_path_for([:group_id, :slug], 5, "test")
+    assert_equal "groups/5/tenants/test",   RemoteWithCompositeKey.remote_path_for([:group_id, :slug], [5, "test"])
   end
   
   
