@@ -348,7 +348,11 @@ module Remotable
   private
     
     def fetch_value
-      self[local_key]
+      if local_key.is_a?(Array)
+        local_key.map(&method(:send))
+      else
+        send(local_key)
+      end
     end
     
     def fetch_remote_resource
