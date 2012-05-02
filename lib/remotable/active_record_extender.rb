@@ -144,7 +144,7 @@ module Remotable
       # so you can use the remoted record in associations.
       def instantiate(*args)
         record = super
-        if record.expired? && !Remotable.nosync?
+        if record.expired? && !record.nosync?
           record.pull_remote_data!
           record = nil if record.destroyed?
         end
