@@ -5,18 +5,11 @@ require "active_support/concern"
 module ActiveResourceFixes
   extend ActiveSupport::Concern
   
-  # ActiveResource hacks method_missing without hacking respond_to?
-  # In fact, it responds to any method that ends in an equals sign.
-  # It also responds to any method that matches an attribute name.
-  def respond_to?(method_symbol, include_private=false)
-    method_name = method_symbol.to_s
-    if method_name =~ /\w+=/
-      true
-    elsif attributes.include?(method_name)
-      true
-    else
-      super(method_symbol, include_private)
-    end
+  
+  # ! ActiveModel::AttributeMethods assumes that :attribute is the target
+  # for attribute lookup. ActiveResource doesn't define that method.
+  def attribute(method)
+    attributes[method]
   end
   
   
@@ -43,6 +36,20 @@ end
 
 
 module ActiveResourceFixes30
+
+  # ActiveResource hacks method_missing without hacking respond_to?
+  # In fact, it responds to any method that ends in an equals sign.
+  # It also responds to any method that matches an attribute name.
+  def respond_to?(method_symbol, include_private=false)
+    method_name = method_symbol.to_s
+    if method_name =~ /\w+=/
+      true
+    elsif attributes.include?(method_name)
+      true
+    else
+      super(method_symbol, include_private)
+    end
+  end
   
   # ! in this method, don't check the Content-Type header: rack doesn't always return it
   def load_attributes_from_response(response)
@@ -56,6 +63,20 @@ end
 
 module ActiveResourceFixes31
   
+  # ActiveResource hacks method_missing without hacking respond_to?
+  # In fact, it responds to any method that ends in an equals sign.
+  # It also responds to any method that matches an attribute name.
+  def respond_to?(method_symbol, include_private=false)
+    method_name = method_symbol.to_s
+    if method_name =~ /\w+=/
+      true
+    elsif attributes.include?(method_name)
+      true
+    else
+      super(method_symbol, include_private)
+    end
+  end
+  
   # ! in this method, don't check the Content-Type header: rack doesn't always return it
   def load_attributes_from_response(response)
     if !response.body.nil? && response.body.strip.size > 0
@@ -66,8 +87,9 @@ module ActiveResourceFixes31
   
 end
 
-
-if Rails.version < '3.1'
+if Rails.version >= '3.2'
+  #
+elsif Rails.version < '3.1'
   ActiveResource::Base.send(:include, ActiveResourceFixes30)
 else
   ActiveResource::Base.send(:include, ActiveResourceFixes31)
