@@ -5,6 +5,7 @@ require 'rails/test_help'
 require 'active_support/core_ext'
 require 'factory_girl'
 require 'turn'
+require 'pry'
 require 'database_cleaner'
 
 
