@@ -260,6 +260,52 @@ module Remotable
       
       
       
+      def all_by_remote
+        map_remote_resources_to_local(remote_model.all)
+      end
+      
+      def map_remote_resources_to_local(remote_resources)
+        return [] if remote_resources.empty?
+        
+        local_resources = nosync { fetch_corresponding_local_resources(remote_resources).to_a }
+        
+        # Ensure a corresponding local resource for
+        # each remote resource; return the set of
+        # local resources.
+        remote_resources.map do |remote_resource|
+          
+          # Get the specific local resource that
+          # corresponds to this remote one.
+          local_resource = local_resources.detect { |local_resource|
+            Array.wrap(remote_key).all? { |remote_attr|
+              local_attr = local_attribute_name(remote_attr)
+              local_resource.send(local_attr) == remote_resource.send(remote_attr)
+            }
+          }
+          
+          # If a local counterpart to this remote value
+          # exists, update the local resource and return it.
+          # If not, create a local counterpart and return it.
+          if local_resource
+            local_resource.instance_variable_set :@remote_resource, remote_resource
+            local_resource.pull_remote_data!
+          else
+            new_from_remote(remote_resource)
+          end
+        end
+      end
+      
+      def fetch_corresponding_local_resources(remote_resources)
+        conditions = Array.wrap(remote_key).each_with_object({}) do |remote_attr, query|
+          local_attr = local_attribute_name(remote_attr)
+          query[local_attr] = remote_resources.map(&remote_attr)
+        end
+        
+        where(conditions)
+      end
+      
+      
+      
     private
       
       

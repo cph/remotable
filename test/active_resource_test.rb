@@ -333,4 +333,36 @@ class ActiveResourceTest < ActiveSupport::TestCase
   
   
   
+  # ========================================================================= #
+  #  Listing                                                                  #
+  # ========================================================================= #
+  
+  test "should be able to find all remote resources and sync them with local resources" do
+    tenant = Factory(:tenant, :expires_at => 1.year.ago)
+    
+    assert_equal 1, Tenant.count, "There's supposed to be 1 tenant"
+    
+    # Creates 1 missing resources, updates 1
+    assert_difference "Tenant.count", +1 do
+      RemoteTenant.run_simulation do |s|
+        s.show(nil, [
+          { :id => tenant.id,
+            :slug => "a-different-slug",
+            :church_name => "A Different Name" },
+          { :id => tenant.id + 1,
+            :slug => "generic-slug",
+            :church_name => "Generic Name" }],
+          :path => "/api/accounts.json")
+        
+        tenants = Tenant.all_by_remote
+        assert_equal 2, tenants.length
+        
+        assert_equal "a-different-slug", tenant.reload.slug
+      end
+    end
+  end
+  
+  
+  
+  
 end
