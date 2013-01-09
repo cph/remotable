@@ -125,7 +125,6 @@ module Remotable
       end
       
       def default_route_for(local_key, remote_key=nil)
-        puts "local_key: #{local_key}; remote_key: #{remote_key}"
         remote_key ||= remote_attribute_name(local_key)
         if remote_key.to_s == primary_key
           ":#{local_key}"
@@ -257,7 +256,12 @@ module Remotable
       
       
       def all_by_remote
-        map_remote_resources_to_local(remote_model.all)
+        find_by_remote_query(:all)
+      end
+      
+      def find_by_remote_query(remote_method_name, *args)
+        remote_resources = remote_model.send(remote_method_name, *args)
+        map_remote_resources_to_local(remote_resources)
       end
       
       def map_remote_resources_to_local(remote_resources)
@@ -304,8 +308,6 @@ module Remotable
       
     private
       
-      
-      
       def default_remote_attributes
         column_names - %w{id created_at updated_at expires_at}
       end
@@ -316,7 +318,6 @@ module Remotable
         raise("No remote key supplied and :id is not a remote attribute") unless remote_attribute_names.member?(:id)
         remote_key(:id)
       end
-      
       
       
       def new_from_remote(remote_resource)
@@ -338,7 +339,6 @@ module Remotable
              :local_attribute_names,
              :local_attribute_name,
              :expires_after,
-             :find_remote_resource_by,
              :to => "self.class"
     
     def expired?
@@ -383,6 +383,14 @@ module Remotable
     
     def fetch_remote_resource
       fetch_value && find_remote_resource_by(remote_key, fetch_value)
+    end
+    
+    def find_remote_resource_by(remote_key, fetch_value)
+      if remote_model.respond_to?(:find_by_for_local)
+        remote_model.find_by_for_local(self, remote_key, fetch_value)
+      else
+        self.class.find_remote_resource_by(remote_key, fetch_value)
+      end
     end
     
     def merge_remote_data!(remote_resource)

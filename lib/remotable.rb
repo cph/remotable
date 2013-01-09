@@ -1,5 +1,6 @@
 require "remotable/version"
 require "remotable/nosync"
+require "remotable/null_remote"
 require "remotable/validate_models"
 require "remotable/with_remote_model_proxy"
 
@@ -59,17 +60,18 @@ module Remotable
   # <tt>model</tt> can be any object that responds
   # to these two methods for getting a resource:
   #
+  #  * +new_resource+
   #  * +find_by(path)+ or +find_by(remote_attr, value)+
   #      +find_by+ can be defined to take either one argument or two.
   #      If it takes one argument, it will be passed path.
   #      If it takes two, it will be passed remote_attr and value.
-  #  * +new_resource+
+  #  * (Optional) +find_by_for_local(local_record, remote_key, fetch_value)+
   # 
   # Resources must respond to:
   #
   #  * +save+ (return true on success and false on failure)
   #  * +destroy+
-  #  * +errors+ (returning a hash of error messages by attribute)
+  #  * +errors+ (returns a hash of error messages by attribute)
   #  * getters and setters for each attribute
   #
   def remote_model(*args)
