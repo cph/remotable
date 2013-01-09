@@ -81,11 +81,7 @@ module Remotable
         map = attrs.extract_options!
         map = attrs.map_to_self.merge(map)
         @remote_attribute_map = map
-        
-        assert_that_remote_resource_responds_to_remote_attributes!(remote_model) if Remotable.validate_models?
-        
-        # Reset routes
-        @local_attribute_routes = {}
+        @local_attribute_routes = {} # reset routes
       end
       
       def fetch_with(local_key, options={})
@@ -313,23 +309,6 @@ module Remotable
       def default_remote_attributes
         column_names - %w{id created_at updated_at expires_at}
       end
-      
-      
-      
-      def assert_that_remote_resource_responds_to_remote_attributes!(model)
-        # Skip this for ActiveResource because it won't define a method until it has
-        # loaded an JSON for that method
-        return if model.is_a?(Class) and (model < ActiveResource::Base) 
-        
-        instance = model.new_resource
-        attr_getters_and_setters = remote_attribute_names + remote_attribute_names.map {|attr| :"#{attr}="}
-        unless instance.respond_to_all?(attr_getters_and_setters)
-          raise InvalidRemoteModel,
-            "#{instance.class} does not respond to getters and setters " <<
-            "for each remote attribute (not implemented: #{instance.does_not_respond_to(attr_getters_and_setters).sort.join(", ")}).\n"
-        end
-      end
-      
       
       
       def generate_default_remote_key
