@@ -14,7 +14,8 @@ class NullRemoteTest < ActiveSupport::TestCase
   
   test "should do nothing if a tenant is expired" do
     tenant = Factory(:null_test_tenant, expires_at: 2.days.ago)
-    tenant = NullTestTenant.find_by_slug(tenant.slug)
+    result = NullTestTenant.find_by_slug(tenant.slug)
+    assert_equal tenant, result
   end
   
   test "should raise an exception with the bang method if resource isn't found locally" do

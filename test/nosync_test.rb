@@ -27,4 +27,19 @@ class NoSyncTest < ActiveSupport::TestCase
   
   
   
+  # ========================================================================= #
+  # Finding                                                                   #
+  # ========================================================================= #
+  
+  test "should do nothing if a tenant is expired" do
+    tenant = Factory(:tenant, :expires_at => 1.year.ago)
+    
+    Remotable.nosync do
+      result = Tenant.find_by_remote_id(tenant.remote_id)
+      assert_equal tenant, result
+    end
+  end
+  
+  
+  
 end
