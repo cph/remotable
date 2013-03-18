@@ -48,7 +48,7 @@ class BespokeResource
 end
 
 class BespokeTenant < ActiveRecord::Base
-  set_table_name "tenants"
+  self.table_name = "tenants"
   
   remote_model BespokeModel.new
   attr_remote :slug, :name

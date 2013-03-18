@@ -126,27 +126,27 @@ class RemotableTest < ActiveSupport::TestCase
   # ========================================================================= #
   
   test "should raise an exception if a remote model does not respond to all class methods" do
-    class Example1 < ActiveRecord::Base; set_table_name "tenants"; end
+    class Example1 < ActiveRecord::Base; self.table_name = "tenants"; end
     class RemoteModel1; def self.find_by(*args); end; end
     assert_raise(Remotable::InvalidRemoteModel) { Example1.remote_model RemoteModel1 }
   end
   
   test "should raise an exception if a remote resource does not respond to all instance methods" do
-    class Example2 < ActiveRecord::Base; set_table_name "tenants"; end
+    class Example2 < ActiveRecord::Base; self.table_name = "tenants"; end
     class RemoteModel2; def self.new_resource; Object.new; end; end
     assert_raise(Remotable::InvalidRemoteModel) { Example2.remote_model RemoteModel2 }
   end
   
   test "should not raise an exception if remote models are not being validated" do
     Remotable.without_validation do
-      class Example4 < ActiveRecord::Base; set_table_name "tenants"; end
+      class Example4 < ActiveRecord::Base; self.table_name = "tenants"; end
       class RemoteModel4; def self.find_by(*args); end; end
       assert_nothing_raised { Example4.remote_model RemoteModel4 }
     end
   end
   
   test "should not raise an exception if a remote model responds to all required methods" do
-    class Example3 < ActiveRecord::Base; set_table_name "tenants"; end
+    class Example3 < ActiveRecord::Base; self.table_name = "tenants"; end
     assert_nothing_raised { Example3.remote_model BespokeModel.new }
   end
   

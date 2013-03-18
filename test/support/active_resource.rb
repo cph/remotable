@@ -21,14 +21,14 @@ class Tenant < ActiveRecord::Base
 end
 
 class RemoteWithoutKey < ActiveRecord::Base
-  set_table_name "tenants"
+  self.table_name = "tenants"
   
   remote_model RemoteTenant
   attr_remote :id => :remote_id
 end
 
 class RemoteWithKey < ActiveRecord::Base
-  set_table_name "tenants"
+  self.table_name = "tenants"
   
   remote_model RemoteTenant
   attr_remote :slug
@@ -36,7 +36,7 @@ class RemoteWithKey < ActiveRecord::Base
 end
 
 class RemoteWithCompositeKey < ActiveRecord::Base
-  set_table_name "tenants"
+  self.table_name = "tenants"
   
   remote_model RemoteTenant
   attr_remote :group_id, :slug
