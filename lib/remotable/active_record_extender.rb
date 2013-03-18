@@ -140,6 +140,7 @@ module Remotable
       def instantiate(*args)
         record = super
         if record.expired? && !record.nosync?
+          Remotable.logger.debug "[remotable:#{name.underscore}:instantiate](#{record.fetch_value.inspect}) expired #{record.expires_at}"
           record.pull_remote_data!
           record = nil if record.destroyed?
         end
@@ -371,8 +372,6 @@ module Remotable
     
     
     
-  private
-    
     def fetch_value
       if local_key.is_a?(Array)
         local_key.map(&method(:send))
@@ -380,6 +379,10 @@ module Remotable
         send(local_key)
       end
     end
+    
+    
+    
+  private
     
     def fetch_remote_resource
       fetch_value && find_remote_resource_by(remote_key, fetch_value)
@@ -401,6 +404,7 @@ module Remotable
     end
     
     def remote_model_has_been_destroyed!
+      Remotable.logger.info "[remotable:#{self.class.name.underscore}:remote_model_has_been_destroyed!](#{fetch_value.inspect})"
       nosync { destroy }
     end
     
@@ -467,6 +471,7 @@ module Remotable
     
     
     def merge_remote_errors(errors)
+      Remotable.logger.debug "[remotable:#{self.class.name.underscore}:merge_remote_errors](#{fetch_value.inspect}) #{errors.inspect}"
       errors.each do |attribute, messages|
         Array.wrap(messages).each do |message|
           self.errors.add(local_attribute_name(attribute), message)
@@ -478,7 +483,9 @@ module Remotable
     def merge_remote_data(remote_resource)
       remote_attribute_map.each do |remote_attr, local_attr|
         if remote_resource.respond_to?(remote_attr)
-          send("#{local_attr}=", remote_resource.send(remote_attr))
+          remote_value = remote_resource.send(remote_attr)
+          Remotable.logger.debug "[remotable:#{self.class.name.underscore}:merge_remote_data](#{fetch_value.inspect}) local.#{local_attr} = #{remote_value.inspect}"
+          send("#{local_attr}=", remote_value)
         end
       end
       self
@@ -487,7 +494,9 @@ module Remotable
     def merge_local_data(remote_resource, changes_only=false)
       remote_attribute_map.each do |remote_attr, local_attr|
         if !changes_only || local_attribute_changed?(local_attr)
-          remote_resource.send("#{remote_attr}=", send(local_attr))
+          local_value = send(local_attr)
+          Remotable.logger.debug "[remotable:#{self.class.name.underscore}:merge_local_data](#{fetch_value.inspect}) remote.#{remote_attr} = #{local_value.inspect}"
+          remote_resource.send("#{remote_attr}=", local_value)
         end
       end
       self

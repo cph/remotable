@@ -42,6 +42,11 @@ module Remotable
   # but turn it off in production.
   self.validate_models = true
   
+  # Logger
+  def self.logger; @logger ||= FakeLogger.new; end
+  def self.logger=(logger); @logger = logger; end
+  
+  
   
   # == remote_model( model [optional] )
   # 
@@ -112,6 +117,18 @@ module Remotable
   
   class InvalidRemoteModel < ArgumentError; end
   
+  class FakeLogger
+    
+    def write(s)
+      puts s
+    end
+    
+    alias :debug :write
+    alias :info :write
+    alias :warn :write
+    alias :error :write
+    
+  end
   
   
 private
