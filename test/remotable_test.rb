@@ -79,7 +79,6 @@ class RemotableTest < ActiveSupport::TestCase
     
     # Fetching this tenant, Remotable will want to
     # refresh it, but it shouldn't because it can't.
-    puts "->"
     assert_not_nil Tenant.where(:slug => "test-1").first, "A tenant with the slug \"test-1\" was not found"
   end
   
