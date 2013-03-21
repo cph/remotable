@@ -27,6 +27,7 @@ module Remotable
       @remote_attribute_map ||= default_remote_attributes.map_to_self
       @local_attribute_routes ||= {}
       @expires_after ||= 1.day
+      @remote_timeout = { :index => 4, :show => 1, :update => 2, :create => 2, :destroy => 2 }
     end
     
     
@@ -83,6 +84,14 @@ module Remotable
         map = attrs.map_to_self.merge(map)
         @remote_attribute_map = map
         @local_attribute_routes = {} # reset routes
+      end
+      
+      def remote_timeout(*args)
+        if args.any?
+          @remote_timeout = n = args.first
+          @remote_timeout = {:index => n, :show => n, :create => n, :update => n, :destroy => n} if n.is_a?(Number)
+        end
+        @remote_timeout
       end
       
       def fetch_with(local_key, options={})
@@ -238,6 +247,8 @@ module Remotable
       end
       
       def invoke_remote_model_find_by(remote_attr, *values)
+        remote_set_timeout :show
+        
         find_by = remote_model.method(:find_by)
         case find_by.arity
         when 1; find_by.call(remote_path_for(remote_attr, *values))
@@ -248,6 +259,8 @@ module Remotable
       end
       
       def invoke_remote_model_find_by_for_local(local_resource, remote_attr, *values)
+        remote_set_timeout :show
+        
         find_by_for_local = remote_model.method(:find_by_for_local)
         case find_by_for_local.arity
         when 2; find_by_for_local.call(local_resource, remote_path_for(remote_attr, *values))
@@ -292,6 +305,7 @@ module Remotable
       end
       
       def find_by_remote_query(remote_method_name, *args)
+        remote_set_timeout :index
         remote_resources = remote_model.send(remote_method_name, *args)
         map_remote_resources_to_local(remote_resources)
       end
@@ -338,6 +352,12 @@ module Remotable
       
       
       
+      def remote_set_timeout(mode)
+        remote_model.timeout = remote_timeout[mode] if remote_model.respond_to?(:timeout=)
+      end
+      
+      
+      
     private
       
       def default_remote_attributes
@@ -371,6 +391,7 @@ module Remotable
              :local_attribute_names,
              :local_attribute_name,
              :expires_after,
+             :remote_set_timeout,
              :to => "self.class"
     
     def expired?
@@ -445,6 +466,8 @@ module Remotable
     def update_remote_resource
       if any_remote_changes? && remote_resource
         merge_local_data(remote_resource, true)
+        
+        remote_set_timeout :update
         if remote_resource.save
           merge_remote_data!(remote_resource)
         else
@@ -458,6 +481,7 @@ module Remotable
       @remote_resource = remote_model.new_resource
       merge_local_data(@remote_resource)
       
+      remote_set_timeout :create
       if @remote_resource.save
         
         # This line is especially crucial if the primary key
@@ -472,6 +496,8 @@ module Remotable
     
     def destroy_remote_resource
       return nil unless remote_resource
+      
+      remote_set_timeout :destroy
       if remote_resource.destroy
         true
       else
