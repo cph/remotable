@@ -10,20 +10,43 @@ module Remotable
       
       module ClassMethods
         
+        IF_MODIFIED_SINCE = "If-Modified-Since"
+        
         
         def new_resource
           new
         end
         
         
-        def find_by!(path)
-          find(:one, :from => expanded_path_for(path))
+        # This is always invoked by instance#fetch_remote_resource.
+        # It expects to find a remote counterpart for a local resource.
+        # It should always return a NullRemote object that doesn't
+        # alter the behavior of a normal model at all.
+        def find_by_for_local(local_record, path)
+          had_previous_value = headers.key?(IF_MODIFIED_SINCE)
+          previous_value = headers[IF_MODIFIED_SINCE]
+          
+          headers[IF_MODIFIED_SINCE] = Remotable.http_format_time(local_record.updated_at)
+          find_by(path)
+        ensure
+          if had_previous_value
+            headers[IF_MODIFIED_SINCE] = previous_value
+          else
+            headers.delete(IF_MODIFIED_SINCE)
+          end
         end
+        
         
         def find_by(path)
           find_by!(path)
         rescue ::ActiveResource::ResourceNotFound
           nil
+        end
+        
+        def find_by!(path)
+          expanded_path = expanded_path_for(path)
+          Remotable.logger.info "[remotable:#{name.underscore}] GET #{expanded_path}"
+          find(:one, :from => expanded_path)
         end
         
         

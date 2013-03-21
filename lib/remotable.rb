@@ -131,6 +131,12 @@ module Remotable
   end
   
   
+  def self.http_format_time(time)
+    time.utc.strftime("%a, %e %b %Y %H:%M:%S %Z")
+  end
+  
+  
+  
 private
   
   def extend_remote_model(remote_model)

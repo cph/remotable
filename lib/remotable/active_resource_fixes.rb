@@ -99,6 +99,20 @@ end
 ActiveResource::Base.send(:include, ActiveResourceFixes)
 
 
+
+module ActiveResourceJsonFormatFixes
+  
+  def decode(json)
+    return {} if json.blank? # <-- insert this line. json will be nil if response is 304
+    super
+  end
+  
+end
+
+ActiveResource::Formats::JsonFormat.extend ActiveResourceJsonFormatFixes
+
+
+
 # ActiveResource expects that errors will be an array of string
 # However, this is not what Rails Responders are inclined to return.
 

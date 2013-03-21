@@ -229,6 +229,16 @@ module Remotable
         end
       end
       
+      def find_remote_resource_for_local_by(local_resource, remote_attr, *values)
+        find_by_for_local = remote_model.method(:find_by_for_local)
+        case find_by_for_local.arity
+        when 2; find_by_for_local.call(local_resource, remote_path_for(remote_attr, *values))
+        when 3; find_by_for_local.call(local_resource, remote_attr, *values)
+        else
+          raise InvalidRemoteModel, "#{remote_model}.find_by_for_local should take either 2 or 3 parameters"
+        end
+      end
+      
       def remote_path_for(remote_key, *values)
         route = route_for(remote_key)
         local_key = self.local_key(remote_key)
@@ -393,7 +403,7 @@ module Remotable
       result = nil
       ms = Benchmark.ms do
         if remote_model.respond_to?(:find_by_for_local)
-          result = remote_model.find_by_for_local(self, remote_key, fetch_value)
+          result = self.class.find_remote_resource_for_local_by(self, remote_key, fetch_value)
         else
           result = self.class.find_remote_resource_by(remote_key, fetch_value)
         end

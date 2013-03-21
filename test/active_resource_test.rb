@@ -14,6 +14,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   
   
   
+  
   # ========================================================================= #
   #  Finding                                                                  #
   # ========================================================================= #
@@ -117,6 +118,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   
   
   
+  
   # ========================================================================= #
   # Expiration                                                                #
   # ========================================================================= #
@@ -146,12 +148,24 @@ class ActiveResourceTest < ActiveSupport::TestCase
         :id => tenant.remote_id,
         :slug => tenant.slug,
         :church_name => unexpected_name
-      })
+      }, :headers => if_modified_since(tenant))
       
       tenant = Tenant.find_by_remote_id(tenant.remote_id)
       assert_equal unexpected_name, tenant.name
     end
   end
+  
+  test "should treat a 304 response as no changes" do
+    tenant = Factory(:tenant, :expires_at => 1.year.ago)
+    
+    RemoteTenant.run_simulation do |s|
+      s.show(tenant.remote_id, nil, :status => 304, :headers => if_modified_since(tenant))
+      
+      tenant = Tenant.find_by_remote_id(tenant.remote_id)
+      assert tenant.expires_at > Time.now, "Tenant should be considered fresh"
+    end
+  end
+  
   
   
   
@@ -168,7 +182,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
         :id => tenant.remote_id,
         :slug => "totally-wonky",
         :church_name => tenant.name
-      })
+      }, :headers => if_modified_since(tenant))
       
       tenant.nosync = false
       tenant.name = "Totally Wonky"
@@ -191,7 +205,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
         :id => tenant.remote_id,
         :slug => tenant.slug,
         :church_name => tenant.name
-      })
+      }, :headers => if_modified_since(tenant))
       s.update(tenant.remote_id, :status => 422, :body => {
         :errors => {:church_name => ["is already taken"]}
       })
@@ -275,6 +289,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   
   
   
+  
   # ========================================================================= #
   # Destroying                                                                #
   # ========================================================================= #
@@ -287,7 +302,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
         :id => tenant.remote_id,
         :slug => tenant.slug,
         :church_name => tenant.name
-      })
+      }, :headers => if_modified_since(tenant))
       
       # Throws an error if save is not called on the remote resource
       mock(tenant.remote_resource).destroy { true }
@@ -305,7 +320,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
         :id => tenant.remote_id,
         :slug => tenant.slug,
         :church_name => tenant.name
-      })
+      }, :headers => if_modified_since(tenant))
       
       s.destroy(tenant.remote_id, 
         :body => { :errors => { :base => ["nope"] } },
@@ -323,13 +338,14 @@ class ActiveResourceTest < ActiveSupport::TestCase
     
     assert_difference "Tenant.count", -1 do
       RemoteTenant.run_simulation do |s|
-        s.show(tenant.remote_id, nil, :status => 404)
+        s.show(tenant.remote_id, nil, :status => 404, :headers => if_modified_since(tenant))
         
-        tenant = Tenant.find_by_remote_id(tenant.remote_id)
+        tenant = Tenant.where(:remote_id => tenant.remote_id).first
         assert_equal nil, tenant
       end
     end
   end
+  
   
   
   
@@ -362,6 +378,15 @@ class ActiveResourceTest < ActiveSupport::TestCase
     end
   end
   
+  
+  
+private
+  
+  
+  
+  def if_modified_since(record)
+    {"If-Modified-Since" => Remotable.http_format_time(record.updated_at)}
+  end
   
   
   
