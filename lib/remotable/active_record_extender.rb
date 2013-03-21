@@ -1,6 +1,7 @@
 require "remotable/core_ext"
 require "active_support/concern"
 require "active_support/core_ext/array/wrap"
+require "benchmark"
 
 
 module Remotable
@@ -389,11 +390,16 @@ module Remotable
     end
     
     def find_remote_resource_by(remote_key, fetch_value)
-      if remote_model.respond_to?(:find_by_for_local)
-        remote_model.find_by_for_local(self, remote_key, fetch_value)
-      else
-        self.class.find_remote_resource_by(remote_key, fetch_value)
+      result = nil
+      ms = Benchmark.ms do
+        if remote_model.respond_to?(:find_by_for_local)
+          result = remote_model.find_by_for_local(self, remote_key, fetch_value)
+        else
+          result = self.class.find_remote_resource_by(remote_key, fetch_value)
+        end
       end
+      Remotable.logger.info "[remotable:#{self.class.name.underscore}:find_remote_resource_by](#{fetch_value.inspect}) %.1fms" % [ ms ]
+      result
     end
     
     def merge_remote_data!(remote_resource)
