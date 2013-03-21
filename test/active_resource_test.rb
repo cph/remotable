@@ -380,6 +380,37 @@ class ActiveResourceTest < ActiveSupport::TestCase
   
   
   
+  
+  # ========================================================================= #
+  #  Timeouts                                                                 #
+  # ========================================================================= #
+  
+  test "should raise a Remotable::TimeoutError when a timeout occurs" do
+    assert_raise Remotable::TimeoutError do
+      stub(Tenant.remote_model).find do |*args|
+        raise ActiveResource::TimeoutError, "it timed out"
+      end
+      
+      Tenant.find_by_remote_id(15)
+    end
+  end
+  
+  test "should ignore a Remotable::TimeoutError when instantiating a record" do
+    tenant = Factory(:tenant, :expires_at => 1.year.ago)
+    
+    assert_nothing_raised do
+      stub(Tenant.remote_model).find do |*args|
+        raise ActiveResource::TimeoutError, "it timed out"
+      end
+      
+      tenant = Tenant.find_by_remote_id(tenant.remote_id)
+      assert_not_nil tenant
+    end
+  end
+  
+  
+  
+  
 private
   
   

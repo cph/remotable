@@ -3,6 +3,7 @@ require "remotable/nosync"
 require "remotable/null_remote"
 require "remotable/validate_models"
 require "remotable/with_remote_model_proxy"
+require "remotable/errors"
 
 
 # Remotable keeps a locally-stored ActiveRecord

@@ -141,11 +141,19 @@ module Remotable
       def instantiate(*args)
         record = super
         if record.expired? && !record.nosync?
-          Remotable.logger.debug "[remotable:#{name.underscore}:instantiate](#{record.fetch_value.inspect}) expired #{record.expires_at}"
-          record.pull_remote_data!
-          record = nil if record.destroyed?
+          begin
+            Remotable.logger.debug "[remotable:#{name.underscore}:instantiate](#{record.fetch_value.inspect}) expired #{record.expires_at}"
+            record.pull_remote_data!
+            record = nil if record.destroyed?
+          rescue Remotable::TimeoutError
+            report_ignored_timeout_error($!)
+          end
         end
         record
+      end
+      
+      def report_ignored_timeout_error(error)
+        Remotable.logger.error "[remotable:#{name.underscore}:instantiate] #{error.message}\n#{error.backtrace}"
       end
       
       
@@ -217,9 +225,19 @@ module Remotable
         remote_resource && new_from_remote(remote_resource)
       end
       
-      # Looks the resource up remotely;
-      # Returns the remote resource.
       def find_remote_resource_by(remote_attr, *values)
+        invoke_remote_model_find_by(remote_attr, *values)
+      end
+      
+      def find_remote_resource_for_local_by(local_resource, remote_attr, *values)
+        if remote_model.respond_to?(:find_by_for_local)
+          invoke_remote_model_find_by_for_local(local_resource, remote_attr, *values)
+        else
+          invoke_remote_model_find_by(remote_attr, *values)
+        end
+      end
+      
+      def invoke_remote_model_find_by(remote_attr, *values)
         find_by = remote_model.method(:find_by)
         case find_by.arity
         when 1; find_by.call(remote_path_for(remote_attr, *values))
@@ -229,7 +247,7 @@ module Remotable
         end
       end
       
-      def find_remote_resource_for_local_by(local_resource, remote_attr, *values)
+      def invoke_remote_model_find_by_for_local(local_resource, remote_attr, *values)
         find_by_for_local = remote_model.method(:find_by_for_local)
         case find_by_for_local.arity
         when 2; find_by_for_local.call(local_resource, remote_path_for(remote_attr, *values))
@@ -238,6 +256,8 @@ module Remotable
           raise InvalidRemoteModel, "#{remote_model}.find_by_for_local should take either 2 or 3 parameters"
         end
       end
+      
+      
       
       def remote_path_for(remote_key, *values)
         route = route_for(remote_key)
@@ -402,11 +422,7 @@ module Remotable
     def find_remote_resource_by(remote_key, fetch_value)
       result = nil
       ms = Benchmark.ms do
-        if remote_model.respond_to?(:find_by_for_local)
-          result = self.class.find_remote_resource_for_local_by(self, remote_key, fetch_value)
-        else
-          result = self.class.find_remote_resource_by(remote_key, fetch_value)
-        end
+        result = self.class.find_remote_resource_for_local_by(self, remote_key, fetch_value)
       end
       Remotable.logger.info "[remotable:#{self.class.name.underscore}:find_remote_resource_by](#{fetch_value.inspect}) %.1fms" % [ ms ]
       result
