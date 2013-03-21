@@ -162,7 +162,7 @@ module Remotable
       end
       
       def report_ignored_timeout_error(error)
-        Remotable.logger.error "[remotable:#{name.underscore}:instantiate] #{error.message}\n#{error.backtrace}"
+        Remotable.logger.error "[remotable:#{name.underscore}:instantiate] #{error.message}"
       end
       
       
