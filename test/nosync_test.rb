@@ -25,6 +25,15 @@ class NoSyncTest < ActiveSupport::TestCase
     end
   end
   
+  test "nosync? should be false if syncing is resumed temporarily on a model that prevents it by default" do
+    Tenant.nosync!
+    assert_equal true, Tenant.new.nosync?
+    Tenant.nosync(false) do
+      assert_equal false, Tenant.new.nosync?
+    end
+    assert_equal true, Tenant.new.nosync?
+  end
+  
   
   
   # ========================================================================= #
