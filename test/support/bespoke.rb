@@ -28,11 +28,10 @@ end
 class BespokeResource
   
   def initialize(attributes={})
-    self.slug = attributes[:slug]
-    self.name = attributes[:name]
+    @attributes = attributes
   end
   
-  attr_accessor :slug, :name
+  delegate :key?, :[], :[]=, :to => :@attributes
   
   def save
     true

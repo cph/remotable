@@ -8,14 +8,32 @@ module Remotable
     module ActiveResource
       extend ActiveSupport::Concern
       
+      
+      
+      def key?(attribute)
+        attributes.key?(attribute.to_s)
+      end
+      
+      def [](attribute)
+        attributes[attribute.to_s]
+      end
+      
+      def []=(attribute, value)
+        attributes[attribute.to_s] = value
+      end
+      
+      
+      
       module ClassMethods
         
         IF_MODIFIED_SINCE = "If-Modified-Since"
         
         
+        
         def new_resource
           new
         end
+        
         
         
         # This is always invoked by instance#fetch_remote_resource.
@@ -36,7 +54,6 @@ module Remotable
           end
         end
         
-        
         def find_by(path)
           find_by!(path)
         rescue ::ActiveResource::ResourceNotFound
@@ -53,6 +70,7 @@ module Remotable
         end
         
         
+        
         def expanded_path_for(path)
           if relative_path?(path)
             URI.join_url_segments(prefix, collection_name, "#{path}.#{format.extension}")
@@ -62,13 +80,12 @@ module Remotable
         end
         
         
-      private
         
+      private
         
         def relative_path?(path)
           !(path.start_with?("/") || path["://"])
         end
-        
         
       end
     end

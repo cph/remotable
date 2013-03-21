@@ -325,7 +325,7 @@ module Remotable
           local_resource = local_resources.detect { |local_resource|
             Array.wrap(remote_key).all? { |remote_attr|
               local_attr = local_attribute_name(remote_attr)
-              local_resource.send(local_attr) == remote_resource.send(remote_attr)
+              local_resource.send(local_attr) == remote_resource[remote_attr]
             }
           }
           
@@ -540,8 +540,8 @@ module Remotable
     
     def merge_remote_data(remote_resource)
       remote_attribute_map.each do |remote_attr, local_attr|
-        if remote_resource.respond_to?(remote_attr)
-          remote_value = remote_resource.send(remote_attr)
+        if remote_resource.key?(remote_attr)
+          remote_value = remote_resource[remote_attr]
           Remotable.logger.debug "[remotable:#{self.class.name.underscore}:merge_remote_data](#{fetch_value.inspect}) local.#{local_attr} = #{remote_value.inspect}"
           send("#{local_attr}=", remote_value)
         end
@@ -554,7 +554,7 @@ module Remotable
         if !changes_only || local_attribute_changed?(local_attr)
           local_value = send(local_attr)
           Remotable.logger.debug "[remotable:#{self.class.name.underscore}:merge_local_data](#{fetch_value.inspect}) remote.#{remote_attr} = #{local_value.inspect}"
-          remote_resource.send("#{remote_attr}=", local_value)
+          remote_resource[remote_attr] = local_value
         end
       end
       self

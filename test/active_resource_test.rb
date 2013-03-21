@@ -163,6 +163,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
       
       tenant = Tenant.find_by_remote_id(tenant.remote_id)
       assert tenant.expires_at > Time.now, "Tenant should be considered fresh"
+      assert_not_nil tenant.remote_id, "The Remote Tenant's id should not be considered nil just because there was no body in the remote response"
     end
   end
   

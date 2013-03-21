@@ -27,13 +27,16 @@ module Remotable
     end
     
     
+    
     # NullRemote needs to receive setter messages and
     # swallow them. It doesn't need to respond to getter
     # messages since it has nothing to say.
-    def method_missing(method_name, *args)
-      super unless method_name.to_s =~ /=$/
+    def []=(attribute, value)
     end
     
+    def key?(attribute)
+      false
+    end
     
     def save
       true
