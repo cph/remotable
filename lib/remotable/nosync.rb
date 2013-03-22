@@ -11,11 +11,15 @@ module Remotable
       self.nosync = new_value
       yield
     ensure
-      self.nosync = old_value
+      @nosync = old_value
     end
     
     def nosync=(val)
-      @nosync = (val == true)
+      @nosync = val
+    end
+    
+    def nosync_value?
+      !@nosync.nil?
     end
     
     def nosync?

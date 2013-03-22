@@ -34,6 +34,21 @@ class NoSyncTest < ActiveSupport::TestCase
     assert_equal true, Tenant.new.nosync?
   end
   
+  test "nosync? should take the value further up the chain if a model's value is temporarily cleared" do
+    assert_not_nil Tenant.remote_model
+    
+    Remotable.nosync!
+    Tenant.nosync(false) do
+      Tenant.nosync(nil) do
+        assert_equal false, Tenant.nosync_value?
+        assert_equal true, Tenant.nosync?
+      end
+      assert_equal true, Tenant.nosync_value?
+      assert_equal false, Tenant.nosync?
+    end
+    assert_equal true, Tenant.nosync?
+  end
+  
   
   
   # ========================================================================= #

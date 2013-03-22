@@ -10,7 +10,8 @@ module Remotable
     include Nosync
     
     def nosync?
-      self.class.nosync? || super
+      return super if nosync_value?
+      self.class.nosync?
     end
     
     
@@ -36,7 +37,9 @@ module Remotable
       include Nosync
       
       def nosync?
-        Remotable.nosync? || remote_model.nil? || super
+        return true if remote_model.nil?
+        return super if nosync_value?
+        Remotable.nosync?
       end
       
       # Sets the key with which a resource is identified remotely.
