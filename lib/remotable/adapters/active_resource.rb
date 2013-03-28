@@ -62,7 +62,7 @@ module Remotable
         
         def find_by!(path)
           expanded_path = expanded_path_for(path)
-          Remotable.logger.info "[remotable:#{name.underscore}] GET #{expanded_path}"
+          Remotable.logger.info "[remotable:#{name.underscore}] GET #{expanded_path} (timeout: #{timeout})"
           find(:one, :from => expanded_path)
         rescue ::ActiveResource::TimeoutError
           $!.extend Remotable::TimeoutError
