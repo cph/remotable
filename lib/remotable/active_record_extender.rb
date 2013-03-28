@@ -347,7 +347,7 @@ module Remotable
       def fetch_corresponding_local_resources(remote_resources)
         conditions = Array.wrap(remote_key).each_with_object({}) do |remote_attr, query|
           local_attr = local_attribute_name(remote_attr)
-          query[local_attr] = remote_resources.map(&remote_attr)
+          query[local_attr] = remote_resources.map { |resource| resource[remote_attr] }
         end
         
         where(conditions)
