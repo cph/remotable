@@ -92,7 +92,7 @@ module Remotable
       def remote_timeout(*args)
         if args.any?
           @remote_timeout = n = args.first
-          @remote_timeout = {:index => n, :show => n, :create => n, :update => n, :destroy => n} if n.is_a?(Number)
+          @remote_timeout = {:index => n, :show => n, :create => n, :update => n, :destroy => n} if n.is_a?(Numeric)
         end
         @remote_timeout
       end
