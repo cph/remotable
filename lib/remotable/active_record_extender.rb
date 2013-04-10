@@ -309,12 +309,12 @@ module Remotable
       
       def find_by_remote_query(remote_method_name, *args)
         remote_set_timeout :index
-        remote_resources = remote_model.send(remote_method_name, *args)
+        remote_resources = Array.wrap(remote_model.send(remote_method_name, *args))
         map_remote_resources_to_local(remote_resources)
       end
       
       def map_remote_resources_to_local(remote_resources)
-        return [] if remote_resources.empty?
+        return [] if remote_resources.nil? || remote_resources.empty?
         
         local_resources = nosync { fetch_corresponding_local_resources(remote_resources).to_a }
         
