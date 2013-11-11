@@ -185,7 +185,7 @@ module Remotable
             raise ArgumentError, "#{method_sym} was called with #{values.length} but #{local_attributes.length} was expected"
           end
           
-          local_resource = ((0...local_attributes.length).inject(scoped) do |scope, i|
+          local_resource = ((0...local_attributes.length).inject(self) do |scope, i|
             scope.where(local_attributes[i] => values[i])
           end).first || fetch_by(method_details[:remote_key], *values)
           
