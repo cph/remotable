@@ -17,8 +17,7 @@ Gem::Specification.new do |s|
   s.add_dependency "activerecord"
   s.add_dependency "activesupport"
   
-  s.add_development_dependency "rails"
-  s.add_development_dependency "minitest"
+  s.add_development_dependency "rails", ">= 3.1.0", "< 5.0.0"
   s.add_development_dependency "turn"
   s.add_development_dependency "pry"
   s.add_development_dependency "factory_girl", "~> 2.0.4"
