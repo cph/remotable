@@ -4,6 +4,7 @@ require "remotable/null_remote"
 require "remotable/validate_models"
 require "remotable/with_remote_model_proxy"
 require "remotable/errors"
+require "remotable/logger_wrapper"
 
 
 # Remotable keeps a locally-stored ActiveRecord
@@ -44,8 +45,13 @@ module Remotable
   self.validate_models = true
   
   # Logger
-  def self.logger; @logger ||= FakeLogger.new; end
-  def self.logger=(logger); @logger = logger; end
+  def self.logger; @logger ||= LoggerWrapper.new(FakeLogger.new); end
+  def self.logger=(logger); @logger = LoggerWrapper.new(logger); end
+  
+  class << self
+    attr_accessor :log_level
+    Remotable.log_level = :debug
+  end
   
   
   
