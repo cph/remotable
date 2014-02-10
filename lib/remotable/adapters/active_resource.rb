@@ -26,7 +26,7 @@ module Remotable
       
       module ClassMethods
         
-        IF_MODIFIED_SINCE = "If-Modified-Since"
+        IF_MODIFIED_SINCE = "If-Modified-Since".freeze
         
         
         
@@ -66,6 +66,9 @@ module Remotable
           find(:one, :from => expanded_path)
         rescue ::ActiveResource::TimeoutError
           $!.extend Remotable::TimeoutError
+          raise
+        rescue ::ActiveResource::ServerError
+          $!.extend Remotable::ServiceUnavailableError if $!.response.code == 503
           raise
         end
         

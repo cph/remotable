@@ -167,6 +167,20 @@ class ActiveResourceTest < ActiveSupport::TestCase
     end
   end
   
+  test "should ignore a 503 response" do
+    expired_at = 1.year.ago
+    tenant = Factory(:tenant, :expires_at => expired_at)
+    
+    RemoteTenant.run_simulation do |s|
+      s.show(tenant.remote_id, nil, :status => 503, :headers => if_modified_since(tenant))
+      
+      assert_nothing_raised do
+        tenant = Tenant.find_by_remote_id(tenant.remote_id)
+      end
+      assert_equal expired_at, tenant.expires_at, "Tenant's expiration date should not have changed"
+    end
+  end
+  
   
   
   
