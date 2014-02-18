@@ -24,6 +24,22 @@ module Remotable
       
       
       
+      # If we use `remote_key` to explicitly set the path where
+      # this resource ought to be found, then we should use the
+      # same path when updating or destroying this resource.
+      # 
+      # To accomplish this, we need to override ActiveResource's
+      # element_path to return the canonical path for this resource.
+      
+      attr_accessor :remote_key_path
+      
+      def element_path(*args)
+        return remote_key_path if remote_key_path
+        super
+      end
+      
+      
+      
       module ClassMethods
         
         IF_MODIFIED_SINCE = "If-Modified-Since".freeze
@@ -63,7 +79,9 @@ module Remotable
         def find_by!(path)
           expanded_path = expanded_path_for(path)
           Remotable.logger.info "[remotable:#{name.underscore}] GET #{expanded_path} (timeout: #{timeout})"
-          find(:one, :from => expanded_path)
+          find(:one, :from => expanded_path).tap do |resource|
+            resource.remote_key_path = expanded_path if resource
+          end
         rescue ::ActiveResource::TimeoutError
           $!.extend Remotable::TimeoutError
           raise

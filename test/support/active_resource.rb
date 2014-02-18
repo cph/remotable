@@ -31,7 +31,7 @@ class RemoteWithKey < ActiveRecord::Base
   self.table_name = "tenants"
   
   remote_model RemoteTenant
-  attr_remote :slug
+  attr_remote :slug, :church_name => :name
   remote_key :slug
 end
 

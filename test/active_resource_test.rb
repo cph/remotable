@@ -211,6 +211,29 @@ class ActiveResourceTest < ActiveSupport::TestCase
     end
   end
   
+  test "should be able to update resources by different attributes" do
+    tenant = RemoteWithKey.where(id: Factory(:tenant).id).first
+    new_name = "Totally Wonky"
+    
+    RemoteTenant.run_simulation do |s|
+      s.show(nil, {
+        :id => tenant.id,
+        :slug => tenant.slug,
+        :church_name => tenant.name
+      }, :path => "/api/accounts/by_slug/#{tenant.slug}.json", :headers => if_modified_since(tenant))
+      
+      s.update(nil, :path => "/api/accounts/by_slug/#{tenant.slug}.json")
+      
+      tenant.nosync = false
+      tenant.name = new_name
+      assert_equal true, tenant.any_remote_changes?
+      
+      tenant.save!
+      
+      # pending "Not sure how to test that an update happened"
+    end
+  end
+  
   test "should fail to update a record locally when failing to update one remotely" do
     tenant = Factory(:tenant)
     new_name = "Totally Wonky"
@@ -321,6 +344,25 @@ class ActiveResourceTest < ActiveSupport::TestCase
       
       # Throws an error if save is not called on the remote resource
       mock(tenant.remote_resource).destroy { true }
+      
+      tenant.nosync = false
+      tenant.destroy
+    end
+  end
+  
+  
+  test "should destroy resources by different attributes" do
+    tenant = RemoteWithKey.where(id: Factory(:tenant).id).first
+    new_name = "Totally Wonky"
+    
+    RemoteTenant.run_simulation do |s|
+      s.show(nil, {
+        :id => tenant.id,
+        :slug => tenant.slug,
+        :church_name => tenant.name
+      }, :path => "/api/accounts/by_slug/#{tenant.slug}.json", :headers => if_modified_since(tenant))
+      
+      s.destroy(nil, :path => "/api/accounts/by_slug/#{tenant.slug}.json")
       
       tenant.nosync = false
       tenant.destroy
