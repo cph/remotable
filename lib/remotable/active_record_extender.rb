@@ -28,7 +28,14 @@ module Remotable
       @remote_attribute_map ||= default_remote_attributes.map_to_self
       @local_attribute_routes ||= {}
       @expires_after ||= 1.day
-      @remote_timeout = { :index => 4, :show => 1, :update => 2, :create => 2, :destroy => 2 }
+      @remote_timeout = {
+        :list    => 4, # when we're getting many remote resources
+        :fetch   => 4, # when we're getting a remote resource that doesn't exist locally
+        :pull    => 1, # when we're getting a remote resource to refresh a local one
+        :update  => 2, # when we're updaing a remote resource
+        :create  => 2, # when we're creating a remote resource
+        :destroy => 2  # when we're destroying a remote resource
+      }
     end
     
     
@@ -92,7 +99,7 @@ module Remotable
       def remote_timeout(*args)
         if args.any?
           @remote_timeout = n = args.first
-          @remote_timeout = {:index => n, :show => n, :create => n, :update => n, :destroy => n} if n.is_a?(Numeric)
+          @remote_timeout = {:list => n, :fetch => n, :pull => n, :create => n, :update => n, :destroy => n} if n.is_a?(Numeric)
         end
         @remote_timeout
       end
@@ -176,6 +183,8 @@ module Remotable
       
       
       
+      # !todo: create these methods on an anonymous module and mix it in
+      
       def respond_to?(method_sym, include_private=false)
         return true if recognize_remote_finder_method(method_sym)
         super(method_sym, include_private)
@@ -256,7 +265,7 @@ module Remotable
       end
       
       def invoke_remote_model_find_by(remote_attr, *values)
-        remote_set_timeout :show
+        remote_set_timeout :fetch
         
         find_by = remote_model.method(:find_by)
         case find_by.arity
@@ -268,7 +277,7 @@ module Remotable
       end
       
       def invoke_remote_model_find_by_for_local(local_resource, remote_attr, *values)
-        remote_set_timeout :show
+        remote_set_timeout :pull
         
         find_by_for_local = remote_model.method(:find_by_for_local)
         case find_by_for_local.arity
@@ -314,7 +323,7 @@ module Remotable
       end
       
       def find_by_remote_query(remote_method_name, *args)
-        remote_set_timeout :index
+        remote_set_timeout :list
         remote_resources = Array.wrap(remote_model.send(remote_method_name, *args))
         map_remote_resources_to_local(remote_resources)
       end
@@ -361,13 +370,12 @@ module Remotable
       
       
       
+    private
+      
       def remote_set_timeout(mode)
         remote_model.timeout = remote_timeout[mode] if remote_model.respond_to?(:timeout=)
       end
       
-      
-      
-    private
       
       def default_remote_attributes
         column_names - %w{id created_at updated_at expires_at}
@@ -400,7 +408,6 @@ module Remotable
              :local_attribute_names,
              :local_attribute_name,
              :expires_after,
-             :remote_set_timeout,
              :to => "self.class"
     
     def expired?
@@ -570,6 +577,12 @@ module Remotable
     end
     
     
+    
+  private
+    
+    def remote_set_timeout(mode)
+      self.class.send :remote_set_timeout, mode
+    end
     
   end
 end

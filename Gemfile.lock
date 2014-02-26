@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    remotable (0.2.5.beta2)
+    remotable (0.3.0.beta1)
       activerecord
       activeresource
       activesupport
