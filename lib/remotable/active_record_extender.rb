@@ -420,6 +420,12 @@ module Remotable
     
     
     
+    def accepts_not_modified?
+      respond_to?(:updated_at)
+    end
+    
+    
+    
     def pull_remote_data!
       if remote_resource
         merge_remote_data!(remote_resource)
