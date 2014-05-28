@@ -239,7 +239,12 @@ module Remotable
       
       
       def expire_all!
-        update_all(["expires_at=?", 1.day.ago])
+        update_all(expires_at: 1.day.ago)
+      end
+      
+      def sync_all!
+        expire_all!
+        all.to_a
       end
       
       
