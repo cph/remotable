@@ -116,6 +116,16 @@ class ActiveResourceTest < ActiveSupport::TestCase
     end
   end
   
+  test "should URI escape remote attributes" do
+    bad_uri = "http://() { :; }; ping -c 23 0.0.0.0"
+    route = "groups/:group_id/tenants/:slug"
+    simple_key_path = Tenant.remote_path_for_simple_key("tenants/:slug", :slug, bad_uri)
+    composite_key_path = Tenant.remote_path_for_composite_key(route, [:group_id, :slug], [5, bad_uri])
+    
+    assert_equal "tenants/http://()%20%7B%20:;%20%7D;%20ping%20-c%2023%200.0.0.0", simple_key_path
+    assert_equal "groups/5/tenants/http://()%20%7B%20:;%20%7D;%20ping%20-c%2023%200.0.0.0", composite_key_path
+  end
+  
   
   
   
@@ -476,6 +486,12 @@ private
     {"If-Modified-Since" => Remotable.http_format_time(record.updated_at)}
   end
   
+  
+  def refute_raises(exception)
+    yield
+  rescue exception
+    flunk "#{$!.class} was raised\n#{$!.message}\n#{$!.backtrace.join("\n")}"
+  end
   
   
 end
