@@ -473,7 +473,7 @@ private
   
   
   def if_modified_since(record)
-    {"If-Modified-Since" => Remotable.http_format_time(record.updated_at)}
+    {"If-Modified-Since" => Remotable.http_format_time(record.remote_updated_at)}
   end
   
   

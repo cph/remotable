@@ -60,7 +60,7 @@ module Remotable
           had_previous_value = headers.key?(IF_MODIFIED_SINCE)
           previous_value = headers[IF_MODIFIED_SINCE]
           
-          headers[IF_MODIFIED_SINCE] = Remotable.http_format_time(local_record.updated_at) if local_record.accepts_not_modified?
+          headers[IF_MODIFIED_SINCE] = Remotable.http_format_time(local_record.remote_updated_at) if local_record.accepts_not_modified?
           find_by(path)
         ensure
           if had_previous_value

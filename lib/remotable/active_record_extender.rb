@@ -426,7 +426,7 @@ module Remotable
     
     
     def accepts_not_modified?
-      respond_to?(:updated_at)
+      respond_to?(:remote_updated_at)
     end
     
     
@@ -573,6 +573,7 @@ module Remotable
           send("#{local_attr}=", remote_value)
         end
       end
+      self.remote_updated_at = Time.now if respond_to?(:remote_updated_at=)
       self
     end
     

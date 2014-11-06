@@ -19,6 +19,7 @@ ActiveRecord::Schema.define(:version => 20110507152635) do
     t.integer  "group_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.datetime "remote_updated_at"
     t.datetime "expires_at", :null => false
   end
 
