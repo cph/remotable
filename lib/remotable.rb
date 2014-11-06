@@ -139,6 +139,7 @@ module Remotable
   
   
   def self.http_format_time(time)
+    return nil unless time
     time.utc.strftime("%a, %e %b %Y %H:%M:%S %Z")
   end
   
