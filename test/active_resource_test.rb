@@ -1,6 +1,7 @@
 require "test_helper"
 require "remotable"
 require "support/active_resource"
+require "support/concurrently"
 require "active_resource_simulator"
 require "rr"
 
@@ -112,6 +113,25 @@ class ActiveResourceTest < ActiveSupport::TestCase
         
         new_tenant = Tenant.find_by_name(new_tenant_name)
         assert_not_nil new_tenant, "A remote tenant was not found with the name #{new_tenant_name.inspect}"
+      end
+    end
+  end
+  
+  test "should not try to create a local record twice when 2 or more threads are fetching a new remote resource concurrently" do
+    slug = "unique"
+    
+    stub(RemoteWithKey).fetch_by(:slug, slug) do
+      sleep 0.01
+      RemoteWithKey.nosync { RemoteWithKey.create!(slug: slug) }
+    end
+    
+    afterwards do
+      RemoteWithKey.where(slug: slug).delete_all
+    end
+    
+    refute_raises ActiveRecord::RecordNotUnique do
+      concurrently do
+        RemoteWithKey.find_by_slug(slug)
       end
     end
   end
@@ -470,12 +490,14 @@ class ActiveResourceTest < ActiveSupport::TestCase
   
 private
   
-  
-  
   def if_modified_since(record)
     {"If-Modified-Since" => Remotable.http_format_time(record.remote_updated_at)}
   end
   
-  
+  def refute_raises(exception)
+    yield
+  rescue exception
+    flunk "#{$!.class} was raised\n#{$!.message}\n#{$!.backtrace.join("\n")}"
+  end
   
 end

@@ -13,7 +13,7 @@ require 'active_record'
 
 ActiveRecord::Base.establish_connection(
   :adapter => "sqlite3",
-  :database => ":memory:",
+  :database => "tmp/test.db",
   :verbosity => "quiet")
 
 load File.join(File.dirname(__FILE__), "support", "schema.rb")

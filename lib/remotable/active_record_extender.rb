@@ -200,9 +200,15 @@ module Remotable
             raise ArgumentError, "#{method_sym} was called with #{values.length} but #{local_attributes.length} was expected"
           end
           
-          local_resource = ((0...local_attributes.length).inject(self) do |scope, i|
-            scope.where(local_attributes[i] => values[i])
-          end).first || fetch_by(method_details[:remote_key], *values)
+          local_resource = begin
+            ((0...local_attributes.length).inject(self) do |scope, i|
+              scope.where(local_attributes[i] => values[i])
+            end).first || fetch_by(method_details[:remote_key], *values)
+          rescue ActiveRecord::RecordNotUnique
+            ((0...local_attributes.length).inject(self) do |scope, i|
+              scope.where(local_attributes[i] => values[i])
+            end).first
+          end
           
           raise ActiveRecord::RecordNotFound if local_resource.nil? && (method_sym =~ /!$/)
           local_resource

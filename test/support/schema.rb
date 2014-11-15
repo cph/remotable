@@ -23,4 +23,6 @@ ActiveRecord::Schema.define(:version => 20110507152635) do
     t.datetime "expires_at", :null => false
   end
 
+  add_index "tenants", ["slug"], name: "index_tenants_on_slug", unique: true, using: :btree
+
 end
