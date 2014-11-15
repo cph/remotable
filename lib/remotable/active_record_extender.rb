@@ -540,6 +540,8 @@ module Remotable
         merge_remote_errors(remote_resource.errors)
         false
       end
+    rescue Remotable::NotFound
+      report_ignored_404_on_destroy $!
     end
     
     
@@ -563,6 +565,10 @@ module Remotable
   protected
     
     
+    
+    def report_ignored_404_on_destroy(error)
+      Remotable.logger.error "[remotable:#{name.underscore}:destroy] #{error.message}"
+    end
     
     def merge_remote_errors(errors)
       Remotable.logger.debug "[remotable:#{self.class.name.underscore}:merge_remote_errors](#{fetch_value.inspect}) #{errors.inspect}"

@@ -370,7 +370,6 @@ class ActiveResourceTest < ActiveSupport::TestCase
     end
   end
   
-  
   test "should destroy resources by different attributes" do
     tenant = RemoteWithKey.where(id: Factory(:tenant).id).first
     new_name = "Totally Wonky"
@@ -407,6 +406,25 @@ class ActiveResourceTest < ActiveSupport::TestCase
       tenant.destroy
       assert_equal false, tenant.destroyed?
       assert_equal ["nope"], tenant.errors[:base]
+    end
+  end
+  
+  test "should succeed in destroying a record locally when the remote source is not found" do
+    tenant = Factory(:tenant)
+    
+    RemoteTenant.run_simulation do |s|
+      s.show(tenant.remote_id, {
+        :id => tenant.remote_id,
+        :slug => tenant.slug,
+        :church_name => tenant.name
+      }, :headers => if_modified_since(tenant))
+      
+      s.destroy(tenant.remote_id,
+        :status => 404)
+      
+      tenant.nosync = false
+      tenant.destroy
+      assert_equal true, tenant.destroyed?
     end
   end
   

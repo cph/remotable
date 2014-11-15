@@ -40,6 +40,15 @@ module Remotable
       
       
       
+      def destroy
+        super
+      rescue ::ActiveResource::ResourceNotFound
+        $!.extend Remotable::NotFound
+        raise
+      end
+      
+      
+      
       module ClassMethods
         
         IF_MODIFIED_SINCE = "If-Modified-Since".freeze
