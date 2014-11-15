@@ -190,31 +190,28 @@ module Remotable
         super(method_sym, include_private)
       end
       
-      def method_missing(method_sym, *args, &block)
+      def method_missing(method_sym, *values, &block)
         method_details = recognize_remote_finder_method(method_sym)
-        if method_details
-          local_attributes = method_details[:local_attributes]
-          values = args
-          
-          unless values.length == local_attributes.length
-            raise ArgumentError, "#{method_sym} was called with #{values.length} but #{local_attributes.length} was expected"
-          end
-          
-          local_resource = begin
-            ((0...local_attributes.length).inject(self) do |scope, i|
-              scope.where(local_attributes[i] => values[i])
-            end).first || fetch_by(method_details[:remote_key], *values)
-          rescue ActiveRecord::RecordNotUnique
-            ((0...local_attributes.length).inject(self) do |scope, i|
-              scope.where(local_attributes[i] => values[i])
-            end).first
-          end
-          
-          raise ActiveRecord::RecordNotFound if local_resource.nil? && (method_sym =~ /!$/)
-          local_resource
-        else
-          super(method_sym, *args, &block)
-        end
+        return super(method_sym, *values, &block) unless method_details
+        
+        local_attributes = method_details[:local_attributes]
+        raise ArgumentError, "#{method_sym} was called with #{values.length} but #{local_attributes.length} was expected" unless values.length == local_attributes.length
+        
+        local_resource = __remotable_lookup(method_details[:remote_key], local_attributes, values)
+        raise ActiveRecord::RecordNotFound if local_resource.nil? && (method_sym =~ /!$/)
+        local_resource
+      end
+      
+      def __remotable_lookup(key, local_attributes, values)
+        __remotable_local_lookup(local_attributes, values) || fetch_by(key, *values)
+      rescue ActiveRecord::RecordNotUnique
+        __remotable_local_lookup(local_attributes, values)
+      end
+      
+      def __remotable_local_lookup(local_attributes, values)
+        (0...local_attributes.length)
+          .inject(self) { |scope, i| scope.where(local_attributes[i] => values[i]) }
+          .limit(1).first
       end
       
       # If the missing method IS a Remotable finder method,
