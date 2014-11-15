@@ -166,6 +166,8 @@ module Remotable
             record = nil if record.destroyed?
           rescue Remotable::TimeoutError
             report_ignored_timeout_error($!)
+          rescue Remotable::NetworkError
+            report_ignored_network_error($!)
           rescue Remotable::ServiceUnavailableError
             report_ignored_503_error($!)
           end
@@ -174,6 +176,10 @@ module Remotable
       end
       
       def report_ignored_timeout_error(error)
+        Remotable.logger.error "[remotable:#{name.underscore}:instantiate] #{error.message}"
+      end
+      
+      def report_ignored_network_error(error)
         Remotable.logger.error "[remotable:#{name.underscore}:instantiate] #{error.message}"
       end
       
