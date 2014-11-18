@@ -107,8 +107,14 @@ module Remotable
       def fetch_with(local_key, options={})
         @local_attribute_routes.merge!(local_key => options[:path])
       end
-      alias :find_by :fetch_with
       
+      def find_by(*args)
+        case args.first
+        when String, Symbol then fetch_with(*args)
+        else
+          super(*args)
+        end
+      end
       
       
       attr_reader :remote_attribute_map,
