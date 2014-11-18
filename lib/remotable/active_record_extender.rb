@@ -108,6 +108,13 @@ module Remotable
         @local_attribute_routes.merge!(local_key => options[:path])
       end
       
+      def find_by(*args)
+        case args.first
+        when String, Symbol then fetch_with(*args)
+        else
+          super(*args)
+        end
+      end
       
       
       attr_reader :remote_attribute_map,
