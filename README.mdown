@@ -71,15 +71,15 @@ If you must look up a remote model with more than one attribute, you can express
 
 For `:id` or whatever you chose to be the remote key, Remotable will create a finder method on the ActiveRecord model. These finders will _first_ look in the local database for the requested record and, if it isn't found, look for the resource remotely. If a finder finds the resource remotely, it creates a local copy and returns that.
 
-You can create additional finder with the `find_by` method:
+You can create additional finder with the `fetch_with` method:
 
     class Tenant < ActiveRecord::Base
       remote_model RemoteTenant
       attr_remote :slug,
                   :customer_name => :name,
                   :id => :remote_id
-      find_by :slug
-      find_by :name
+      fetch_with :slug
+      fetch_with :name
     end
 
 Remotable will create the following methods and assume the URI for the custom finders from the attribute. The example above will create the following methods:
@@ -90,18 +90,18 @@ Remotable will create the following methods and assume the URI for the custom fi
 
 Note that the finder methods are named with the _local_ attributes.
 
-You can specify a custom path with the `find_by` method:
+You can specify a custom path with the `fetch_with` method:
 
     class Tenant < ActiveRecord::Base
       remote_model RemoteTenant
       attr_remote :slug,
                   :customer_name => :name,
                   :id => :remote_id
-      find_by :name, :path => "by_nombre/:name"
+      fetch_with :name, :path => "by_nombre/:name"
     end
 
 
-When you use `find_by`, give the name of the _local_ attribute not the remote one (if they differ). Also, the name of the symbolic part of the path should match the local attribute name as well.
+When you use `fetch_with`, give the name of the _local_ attribute not the remote one (if they differ). Also, the name of the symbolic part of the path should match the local attribute name as well.
 
 ### Expiration
 

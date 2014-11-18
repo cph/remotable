@@ -107,7 +107,6 @@ module Remotable
       def fetch_with(local_key, options={})
         @local_attribute_routes.merge!(local_key => options[:path])
       end
-      alias :find_by :fetch_with
       
       
       

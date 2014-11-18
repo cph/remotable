@@ -16,8 +16,8 @@ end
 class Tenant < ActiveRecord::Base
   remote_model RemoteTenant
   attr_remote :slug, :church_name => :name, :id => :remote_id
-  find_by :name, :path => "by_nombre/:name"
-  find_by :slug
+  fetch_with :name, :path => "by_nombre/:name"
+  fetch_with :slug
 end
 
 class RemoteWithoutKey < ActiveRecord::Base
