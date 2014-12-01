@@ -566,7 +566,7 @@ module Remotable
     
     
     def report_ignored_404_on_destroy(error)
-      Remotable.logger.error "[remotable:#{name.underscore}:destroy] #{error.message}"
+      Remotable.logger.error "[remotable:#{self.class.name.underscore}:destroy] #{error.message}"
     end
     
     def merge_remote_errors(errors)
