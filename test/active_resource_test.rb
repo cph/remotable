@@ -446,7 +446,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
         s.show(tenant.remote_id, nil, :status => 404, :headers => if_modified_since(tenant))
         
         tenant = Tenant.where(:remote_id => tenant.remote_id).first
-        assert_equal nil, tenant
+        assert tenant.destroyed?
       end
     end
   end

@@ -162,7 +162,6 @@ module Remotable
           begin
             Remotable.logger.debug "[remotable:#{name.underscore}:instantiate](#{record.fetch_value.inspect}) expired #{record.expires_at}"
             record.pull_remote_data!
-            record = nil if record.destroyed?
           rescue Remotable::TimeoutError
             report_ignored_timeout_error($!)
           rescue Remotable::NetworkError
@@ -203,6 +202,7 @@ module Remotable
         raise ArgumentError, "#{method_sym} was called with #{values.length} but #{local_attributes.length} was expected" unless values.length == local_attributes.length
         
         local_resource = __remotable_lookup(method_details[:remote_key], local_attributes, values)
+        local_resource = nil if local_resource && local_resource.destroyed?
         raise ActiveRecord::RecordNotFound if local_resource.nil? && (method_sym =~ /!$/)
         local_resource
       end
