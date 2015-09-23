@@ -91,7 +91,7 @@ module Remotable
           find(:one, :from => expanded_path).tap do |resource|
             resource.remote_key_path = expanded_path if resource
           end
-        rescue SocketError
+        rescue SocketError, EOFError
           $!.extend Remotable::NetworkError
           raise
         rescue ::ActiveResource::TimeoutError
