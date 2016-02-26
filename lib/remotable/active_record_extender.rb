@@ -480,7 +480,7 @@ module Remotable
       ms = Benchmark.ms do
         result = self.class.find_remote_resource_for_local_by(self, remote_key, fetch_value)
       end
-      Remotable.logger.info "[remotable:#{self.class.name.underscore}:find_remote_resource_by](#{fetch_value.inspect}) %.1fms" % [ ms ]
+      Remotable.logger.info "[remotable:#{self.class.name.underscore}:find_remote_resource_by](#{fetch_value.inspect})" << " %.1fms" % [ ms ]
       result
     end
     
