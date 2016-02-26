@@ -5,7 +5,7 @@ module Idioms
   module Test
     module Concurrently
       extend ActiveSupport::Concern
-      
+
       included do
         setup do
           @_concurrency_teardown = nil
@@ -53,7 +53,7 @@ module Idioms
         return unless @_concurrency_teardown
         concurrently(threads: 1, &@_concurrency_teardown)
       end
-      
+
     end
   end
 end

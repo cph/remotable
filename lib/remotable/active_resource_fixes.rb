@@ -4,20 +4,20 @@ require "active_support/concern"
 
 module ActiveResourceFixes
   extend ActiveSupport::Concern
-  
-  
+
+
   # ! ActiveModel::AttributeMethods assumes that :attribute is the target
   # for attribute lookup. ActiveResource doesn't define that method.
   def attribute(method)
     attributes[method]
   end
-  
-  
+
+
   included do
     alias_method_chain :destroy, :validation
   end
-  
-  
+
+
   # ActiveResource::Validations overrides ActiveResource::Base#save
   # to rescue from ActiveResource::ResourceInvalid and record the
   # resource's errors. Do the same for `destroy`.
@@ -31,7 +31,7 @@ module ActiveResourceFixes
     load_remote_errors(@remote_errors, true)
     false
   end
-  
+
 end
 
 
@@ -50,19 +50,19 @@ module ActiveResourceFixes30
       super(method_symbol, include_private)
     end
   end
-  
+
   # ! in this method, don't check the Content-Type header: rack doesn't always return it
   def load_attributes_from_response(response)
     if !response.body.nil? && response.body.strip.size > 0
       load(self.class.format.decode(response.body))
     end
   end
-  
+
 end
 
 
 module ActiveResourceFixes31
-  
+
   # ActiveResource hacks method_missing without hacking respond_to?
   # In fact, it responds to any method that ends in an equals sign.
   # It also responds to any method that matches an attribute name.
@@ -76,7 +76,7 @@ module ActiveResourceFixes31
       super(method_symbol, include_private)
     end
   end
-  
+
   # ! in this method, don't check the Content-Type header: rack doesn't always return it
   def load_attributes_from_response(response)
     if !response.body.nil? && response.body.strip.size > 0
@@ -84,7 +84,7 @@ module ActiveResourceFixes31
       @persisted = true
     end
   end
-  
+
 end
 
 if Rails.version >= '3.2'
@@ -101,12 +101,12 @@ ActiveResource::Base.send(:include, ActiveResourceFixes)
 
 
 module ActiveResourceJsonFormatFixes
-  
+
   def decode(json)
     return {} if json.blank? # <-- insert this line. json will be nil if response is 304
     super
   end
-  
+
 end
 
 ActiveResource::Formats::JsonFormat.extend ActiveResourceJsonFormatFixes
@@ -117,7 +117,7 @@ ActiveResource::Formats::JsonFormat.extend ActiveResourceJsonFormatFixes
 # However, this is not what Rails Responders are inclined to return.
 
 class ActiveResource::Errors
-  
+
   # Grabs errors from an array of messages (like ActiveRecord::Validations).
   # The second parameter directs the errors cache to be cleared (default)
   # or not (by passing true).
@@ -130,5 +130,5 @@ class ActiveResource::Errors
       end
     end
   end
-  
+
 end

@@ -36,27 +36,27 @@ require "remotable/logger_wrapper"
 module Remotable
   extend Nosync
   extend ValidateModels
-  
+
   # By default, Remotable will validate the models you
   # supply it via +remote_model+. You can set validate_models
   # to false to skip this validation. It is recommended that
   # you keep validation on in development and test environments,
   # but turn it off in production.
   self.validate_models = true
-  
+
   # Logger
   def self.logger; @logger ||= LoggerWrapper.new(FakeLogger.new); end
   def self.logger=(logger); @logger = LoggerWrapper.new(logger); end
-  
+
   class << self
     attr_accessor :log_level
     Remotable.log_level = :debug
   end
-  
-  
-  
+
+
+
   # == remote_model( model [optional] )
-  # 
+  #
   # When called without arguments, this method returns
   # the remote model connected to this local ActiveRecord
   # model.
@@ -68,7 +68,7 @@ module Remotable
   # of these API consumers:
   #
   #  * ActiveResource
-  # 
+  #
   # <tt>model</tt> can be any object that responds
   # to these two methods for getting a resource:
   #
@@ -78,7 +78,7 @@ module Remotable
   #      If it takes one argument, it will be passed path.
   #      If it takes two, it will be passed remote_attr and value.
   #  * (Optional) +find_by_for_local(local_record, remote_key, fetch_value)+
-  # 
+  #
   # Resources must respond to:
   #
   #  * +save+ (return true on success and false on failure)
@@ -89,20 +89,20 @@ module Remotable
   def remote_model(*args)
     if args.length >= 1
       @remote_model = args.first
-      
+
       @__remotable_included ||= begin
         require "remotable/active_record_extender"
         include Remotable::ActiveRecordExtender
         true
       end
-      
+
       extend_remote_model(@remote_model) if @remote_model
     end
     @remote_model
   end
-  
-  
-  
+
+
+
   def with_remote_model(model)
     if block_given?
       begin
@@ -116,51 +116,51 @@ module Remotable
       WithRemoteModelProxy.new(self, model)
     end
   end
-  
-  
-  
+
+
+
   REQUIRED_CLASS_METHODS = [:find_by, :new_resource]
   REQUIRED_INSTANCE_METHODS = [:save, :errors, :destroy]
-  
+
   class InvalidRemoteModel < ArgumentError; end
-  
+
   class FakeLogger
-    
+
     def write(s)
       puts s
     end
-    
+
     alias :debug :write
     alias :info :write
     alias :warn :write
     alias :error :write
-    
+
   end
-  
-  
+
+
   def self.http_format_time(time)
     return "" unless time
     time.utc.strftime("%a, %e %b %Y %H:%M:%S %Z")
   end
-  
-  
-  
+
+
+
 private
-  
+
   def extend_remote_model(remote_model)
     if remote_model.is_a?(Class) and (remote_model < ActiveResource::Base)
       require "remotable/adapters/active_resource"
       remote_model.send(:include, Remotable::Adapters::ActiveResource)
-    
+
     #
     # Adapters for other API consumers can be implemented here
     #
-    
+
     else
       assert_that_remote_model_meets_api_requirements!(remote_model) if Remotable.validate_models?
     end
   end
-  
+
   def assert_that_remote_model_meets_api_requirements!(model)
     unless model.respond_to_all?(REQUIRED_CLASS_METHODS)
       raise InvalidRemoteModel,
@@ -174,7 +174,7 @@ private
         "because it does not define these methods: #{instance.does_not_respond_to(REQUIRED_INSTANCE_METHODS).join(", ")}."
     end
   end
-  
+
 end
 
 

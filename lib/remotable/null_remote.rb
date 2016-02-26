@@ -1,8 +1,8 @@
 module Remotable
   class NullRemote
-    
+
     class << self
-      
+
       # This is always invoked by instance#fetch_remote_resource.
       # It expects to find a remote counterpart for a local resource.
       # It should always return a NullRemote object that doesn't
@@ -10,7 +10,7 @@ module Remotable
       def find_by_for_local(local_record, remote_key, fetch_value)
         new
       end
-      
+
       # This is always invoked via class#find_remote_resource_by
       # by class#fetch_by. It gives the remote model an opportunity
       # to discover a remote object that doesn't have a local
@@ -19,36 +19,36 @@ module Remotable
       def find_by(remote_attr, value)
         nil
       end
-      
+
       def new_resource
         new
       end
-      
+
     end
-    
-    
-    
+
+
+
     # NullRemote needs to receive setter messages and
     # swallow them. It doesn't need to respond to getter
     # messages since it has nothing to say.
     def []=(attribute, value)
     end
-    
+
     def key?(attribute)
       false
     end
-    
+
     def save
       true
     end
-    
+
     def errors
       {}
     end
-    
+
     def destroy
       true
     end
-    
+
   end
 end
