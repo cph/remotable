@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    remotable (0.3.0)
+    remotable (0.4.0.beta2)
       activerecord
       activeresource
       activesupport
@@ -123,3 +123,6 @@ DEPENDENCIES
   simplecov
   sqlite3
   turn
+
+BUNDLED WITH
+   1.10.6
