@@ -98,8 +98,8 @@ module Remotable
           $!.extend Remotable::TimeoutError
           raise
         rescue ::ActiveResource::ServerError
-          $!.extend Remotable::ServiceUnavailableError if $!.response.code == 503
-          $!.extend Remotable::TimeoutError if $!.response.code == 504
+          $!.extend Remotable::ServiceUnavailableError if $!.response.code.to_i == 503
+          $!.extend Remotable::TimeoutError if $!.response.code.to_i == 504
           raise
         end
 
