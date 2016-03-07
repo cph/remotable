@@ -108,6 +108,16 @@ module Remotable
         @local_attribute_routes.merge!(local_key => options[:path])
       end
 
+      attr_accessor :remotable_skip_validation_on_sync
+
+      def remotable_skip_validation!
+        self.remotable_skip_validation_on_sync = true
+      end
+
+      def remotable_skip_validation_on_sync?
+        self.remotable_skip_validation_on_sync
+      end
+
 
 
       attr_reader :remote_attribute_map,
@@ -421,6 +431,7 @@ module Remotable
              :local_attribute_names,
              :local_attribute_name,
              :expires_after,
+             :remotable_skip_validation_on_sync?,
              :to => "self.class"
 
     def expired?
@@ -487,7 +498,7 @@ module Remotable
     def merge_remote_data!(remote_resource)
       merge_remote_data(remote_resource)
       reset_expiration_date
-      nosync { save! }
+      nosync { save!(validate: !remotable_skip_validation_on_sync?) }
       self
     end
 
