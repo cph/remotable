@@ -178,6 +178,8 @@ module Remotable
             report_ignored_network_error($!)
           rescue Remotable::ServiceUnavailableError
             report_ignored_503_error($!)
+          rescue Remotable::SSLError
+            report_ignored_ssl_error($!)
           end
         end
         record
@@ -192,6 +194,10 @@ module Remotable
       end
 
       def report_ignored_503_error(error)
+        Remotable.logger.error "[remotable:#{name.underscore}:instantiate] #{error.message}"
+      end
+
+      def report_ignored_ssl_error(error)
         Remotable.logger.error "[remotable:#{name.underscore}:instantiate] #{error.message}"
       end
 
@@ -340,7 +346,6 @@ module Remotable
       end
 
 
-
       def all_by_remote
         find_by_remote_query(:all)
       end
@@ -348,6 +353,7 @@ module Remotable
       def find_by_remote_query(remote_method_name, *args)
         remote_set_timeout :list
         remote_resources = Array.wrap(remote_model.send(remote_method_name, *args))
+
         map_remote_resources_to_local(remote_resources)
       end
 
