@@ -1,15 +1,13 @@
-require 'rubygems'
-require 'simplecov'
-require 'rails'
-require 'rails/test_help'
-require 'active_support/core_ext'
-require 'factory_girl'
-require 'turn'
-require 'pry'
-require 'database_cleaner'
-
-
-require 'active_record'
+require "rubygems"
+require "simplecov"
+require "active_support/core_ext"
+require "factory_girl"
+require "turn"
+require "pry"
+require "database_cleaner"
+require "active_record"
+require "factories/tenants"
+require "minitest/autorun"
 
 ActiveRecord::Base.establish_connection(
   :adapter => "sqlite3",
@@ -17,10 +15,6 @@ ActiveRecord::Base.establish_connection(
   :verbosity => "quiet")
 
 load File.join(File.dirname(__FILE__), "support", "schema.rb")
-
-
-require 'factories/tenants'
-
 
 DatabaseCleaner.strategy = :transaction
 

@@ -7,7 +7,7 @@ module Remotable
     end
 
     def nosync(new_value=true)
-      old_value = @nosync
+      old_value = _nosync
       self.nosync = new_value
       yield
     ensure
@@ -19,11 +19,17 @@ module Remotable
     end
 
     def nosync_value?
-      !@nosync.nil?
+      !_nosync.nil?
     end
 
     def nosync?
       @nosync == true
+    end
+
+  private
+
+    def _nosync
+      @nosync if instance_variable_defined?(:@nosync)
     end
 
 

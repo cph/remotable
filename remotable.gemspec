@@ -10,23 +10,23 @@ Gem::Specification.new do |s|
   s.homepage    = ""
   s.summary     = %q{Binds an ActiveRecord model to a remote resource and keeps the two synchronized}
   s.description = %q{Remotable keeps a locally-stored ActiveRecord synchronized with a remote resource.}
-  
+
   s.rubyforge_project = "remotable"
-  
-  s.add_dependency "activeresource"
+
+  s.add_dependency "activeresource", ">= 3.2"
   s.add_dependency "activerecord"
   s.add_dependency "activesupport"
-  
-  s.add_development_dependency "rails", ">= 3.1.0", "< 5.0.0"
+
+  s.add_development_dependency "rake"
   s.add_development_dependency "turn"
   s.add_development_dependency "pry"
   s.add_development_dependency "factory_girl", "~> 2.0.4"
-  s.add_development_dependency "sqlite3"
+  s.add_development_dependency "sqlite3", "~> 1.3.13"
   s.add_development_dependency "active_resource_simulator"
   s.add_development_dependency "simplecov"
   s.add_development_dependency "rr"
   s.add_development_dependency "database_cleaner"
-  
+
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
