@@ -3,7 +3,7 @@ PATH
   specs:
     remotable (0.4.0.beta2)
       activerecord
-      activeresource
+      activeresource (>= 3.2)
       activesupport
 
 GEM

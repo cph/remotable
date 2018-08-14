@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
 
   s.rubyforge_project = "remotable"
 
-  s.add_dependency "activeresource"
+  s.add_dependency "activeresource", ">= 3.2"
   s.add_dependency "activerecord"
   s.add_dependency "activesupport"
 
