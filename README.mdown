@@ -1,5 +1,7 @@
 # Remotable
 
+[![Build Status](https://travis-ci.org/boblail/remotable.svg)](https://travis-ci.org/boblail/remotable)
+
 Remotable associates an ActiveRecord model with a remote resource (like an ActiveResource model) and keeps the two synchronized.
 
 - When a local record is loaded, Remotable ensures that it is up-to-date.

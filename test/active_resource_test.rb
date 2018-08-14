@@ -207,7 +207,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
       assert_nothing_raised do
         tenant = Tenant.find_by_remote_id(tenant.remote_id)
       end
-      assert_equal expired_at, tenant.expires_at, "Tenant's expiration date should not have changed"
+      assert_in_delta expired_at, tenant.expires_at, 0.1, "Tenant's expiration date should not have changed"
     end
   end
 
