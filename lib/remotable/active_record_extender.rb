@@ -564,6 +564,7 @@ module Remotable
 
     def initialize_expiration_date
       reset_expiration_date unless self.expires_at
+      true
     end
 
     def reset_expiration_date
