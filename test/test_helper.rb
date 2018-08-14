@@ -1,7 +1,5 @@
 require 'rubygems'
 require 'simplecov'
-require 'rails'
-require 'rails/test_help'
 require 'active_support/core_ext'
 require 'factory_girl'
 require 'turn'
@@ -32,3 +30,5 @@ class ActiveSupport::TestCase
     DatabaseCleaner.clean
   end
 end
+
+require "minitest/autorun"
