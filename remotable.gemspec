@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "turn"
   s.add_development_dependency "pry"
   s.add_development_dependency "factory_girl", "~> 2.0.4"
-  s.add_development_dependency "sqlite3"
+  s.add_development_dependency "sqlite3", "~> 1.3.13"
   s.add_development_dependency "active_resource_simulator"
   s.add_development_dependency "simplecov"
   s.add_development_dependency "rr"
