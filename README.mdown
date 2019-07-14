@@ -20,29 +20,34 @@ Just add the following to your Gemfile:
 
 **1.** Remotable requires that your local model have an `expires_at` column.
 
-    class AddExpiresAtToTenants < ActiveRecord::Migration
-      def self.up
-        add_column :tenants, :expires_at, :timestamp, :null => false
-      end
-    end
+```ruby
+class AddExpiresAtToTenants < ActiveRecord::Migration
+  def self.up
+    add_column :tenants, :expires_at, :timestamp, :null => false
+  end
+end
+```
 
 **2.** Your local model has to be associated with a remote model: (Let's say `RemoteTenant` is the name of an ActiveResource model.)
 
-    class Tenant < ActiveRecord::Base
-      remote_model RemoteTenant
-    end
-
+```ruby
+class Tenant < ActiveRecord::Base
+  remote_model RemoteTenant
+end
+```
 
 ### Configuration
 
 Specify the attributes of the local model that you want to keep in sync with the remote model. You can also specify mappings by using the hash rocket. The line `:customer_name => :name` tells Remotable to keep `RemoteTenant#customer_name` in sync with `Tenant#name`.
 
-    class Tenant < ActiveRecord::Base
-      remote_model RemoteTenant
-      attr_remote :slug,
-                  :customer_name => :name,
-                  :id => :remote_id
-    end
+```ruby
+class Tenant < ActiveRecord::Base
+  remote_model RemoteTenant
+  attr_remote :slug,
+              :customer_name => :name,
+              :id => :remote_id
+end
+```
 
 ### Remote Keys
 
@@ -50,24 +55,28 @@ By default Remotable assumes that the local model and remote model are joined wi
 
 If you specify `attr_remote :id => :remote_id`, then the join will be on `local_model.remote_id=remote_model.id`, but you can also use a different attribute as the join key:
 
-    class Tenant < ActiveRecord::Base
-      remote_model RemoteTenant
-      attr_remote :slug,
-                  :customer_name => :name,
-                  :id => :remote_id
-      remote_key  :slug
-    end
+```ruby
+class Tenant < ActiveRecord::Base
+  remote_model RemoteTenant
+  attr_remote :slug,
+              :customer_name => :name,
+              :id => :remote_id
+  remote_key  :slug
+end
+```
 
 Now, the join could be expressed this way: `local_model.slug=remote_model.slug`.
 
 If you must look up a remote model with more than one attribute, you can express a composite key this way:
 
-    class Event < ActiveRecord::Base
-      remote_model RemoteEvent
-      attr_remote :calendar_id,
-                  :id => :remote_id
-      remote_key  [:calendar_id, :remote_id]
-    end
+```ruby
+class Event < ActiveRecord::Base
+  remote_model RemoteEvent
+  attr_remote :calendar_id,
+              :id => :remote_id
+  remote_key  [:calendar_id, :remote_id]
+end
+```
 
 ### Finders
 
@@ -75,33 +84,38 @@ For `:id` or whatever you chose to be the remote key, Remotable will create a fi
 
 You can create additional finder with the `fetch_with` method:
 
-    class Tenant < ActiveRecord::Base
-      remote_model RemoteTenant
-      attr_remote :slug,
-                  :customer_name => :name,
-                  :id => :remote_id
-      fetch_with :slug
-      fetch_with :name
-    end
+```ruby
+class Tenant < ActiveRecord::Base
+  remote_model RemoteTenant
+  attr_remote :slug,
+              :customer_name => :name,
+              :id => :remote_id
+  fetch_with :slug
+  fetch_with :name
+end
+```
 
 Remotable will create the following methods and assume the URI for the custom finders from the attribute. The example above will create the following methods:
 
+```ruby
     find_by_remote_id(...)    # Looks in api_path/tenants/:id
     find_by_slug(...)         # Looks in api_path/tenants/by_slug/:slug
     find_by_name(...)         # Looks in api_path/tenants/by_name/:name
+```
 
 Note that the finder methods are named with the _local_ attributes.
 
 You can specify a custom path with the `fetch_with` method:
 
-    class Tenant < ActiveRecord::Base
-      remote_model RemoteTenant
-      attr_remote :slug,
-                  :customer_name => :name,
-                  :id => :remote_id
-      fetch_with :name, :path => "by_nombre/:name"
-    end
-
+```ruby
+class Tenant < ActiveRecord::Base
+  remote_model RemoteTenant
+  attr_remote :slug,
+              :customer_name => :name,
+              :id => :remote_id
+  fetch_with :name, :path => "by_nombre/:name"
+end
+```
 
 When you use `fetch_with`, give the name of the _local_ attribute not the remote one (if they differ). Also, the name of the symbolic part of the path should match the local attribute name as well.
 
@@ -109,10 +123,12 @@ When you use `fetch_with`, give the name of the _local_ attribute not the remote
 
 Whenever a remoted record is instantiated, Remotable checks the value of its `expires_at` attribute. If the date is in the past, Remotable pulls changes from the remote resource. Whenever a record is saved, `expires_at` is set to a time in the future&mdash;by default, 1 day. You can change how frequently a record expires by setting `expires_after` to a duration:
 
-    class Tenant < ActiveRecord::Base
-      remote_model RemoteTenant
-      expires_after 1.hour
-    end
+```ruby
+class Tenant < ActiveRecord::Base
+  remote_model RemoteTenant
+  expires_after 1.hour
+end
+```
 
 ### Adapters
 
