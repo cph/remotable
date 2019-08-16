@@ -1,10 +1,6 @@
 require "active_resource"
-require "active_support/concern"
-
 
 module ActiveResourceFixes
-  extend ActiveSupport::Concern
-
 
   # ! ActiveModel::AttributeMethods assumes that :attribute is the target
   # for attribute lookup. ActiveResource doesn't define that method.
@@ -12,17 +8,11 @@ module ActiveResourceFixes
     attributes[method]
   end
 
-
-  included do
-    alias_method_chain :destroy, :validation
-  end
-
-
   # ActiveResource::Validations overrides ActiveResource::Base#save
   # to rescue from ActiveResource::ResourceInvalid and record the
   # resource's errors. Do the same for `destroy`.
-  def destroy_with_validation
-    destroy_without_validation
+  def destroy
+    super
   rescue ActiveResource::ResourceInvalid => error
     # cache the remote errors because every call to <tt>valid?</tt> clears
     # all errors. We must keep a copy to add these back after local
@@ -34,7 +24,7 @@ module ActiveResourceFixes
 
 end
 
-ActiveResource::Base.send(:include, ActiveResourceFixes)
+ActiveResource::Base.send(:prepend, ActiveResourceFixes)
 
 
 
