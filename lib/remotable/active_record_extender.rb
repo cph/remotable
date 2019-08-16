@@ -1,6 +1,7 @@
 require "remotable/core_ext"
 require "active_support/concern"
 require "active_support/core_ext/array/wrap"
+require "active_resource/threadsafe_attributes"
 require "benchmark"
 
 
@@ -25,10 +26,10 @@ module Remotable
 
       validates_presence_of :expires_at
 
-      @remote_attribute_map ||= default_remote_attributes.map_to_self
-      @local_attribute_routes ||= {}
-      @expires_after ||= 1.day
-      @remote_timeout = {
+      self._remote_attribute_map ||= default_remote_attributes.map_to_self
+      self._local_attribute_routes ||= {}
+      self._expires_after ||= 1.day
+      self._remote_timeout = {
         :list    => 4, # when we're getting many remote resources
         :fetch   => 4, # when we're getting a remote resource that doesn't exist locally
         :pull    => 1, # when we're getting a remote resource to refresh a local one
@@ -42,6 +43,10 @@ module Remotable
 
     module ClassMethods
       include Nosync
+      include ThreadsafeAttributes
+
+      threadsafe_attribute :_remote_key, :_expires_after, :_remote_attribute_map,
+        :_local_attribute_routes, :_remote_timeout, :remotable_skip_validation_on_sync
 
       def nosync?
         return true if remote_model.nil?
@@ -78,37 +83,43 @@ module Remotable
           # Set up a finder method for the remote_key
           fetch_with(local_key(remote_key), options)
 
-          @remote_key = remote_key
+          self._remote_key = remote_key
         else
-          @remote_key || generate_default_remote_key
+          _remote_key || generate_default_remote_key
         end
       end
 
       def expires_after(*args)
-        @expires_after = args.first if args.any?
-        @expires_after
+        self._expires_after = args.first if args.any?
+        _expires_after
       end
 
       def attr_remote(*attrs)
         map = attrs.extract_options!
         map = attrs.map_to_self.merge(map)
-        @remote_attribute_map = map
-        @local_attribute_routes = {} # reset routes
+        self._remote_attribute_map = map
+        self._local_attribute_routes = {} # reset routes
       end
 
       def remote_timeout(*args)
         if args.any?
-          @remote_timeout = n = args.first
-          @remote_timeout = {:list => n, :fetch => n, :pull => n, :create => n, :update => n, :destroy => n} if n.is_a?(Numeric)
+          self._remote_timeout = n = args.first
+          self._remote_timeout = {:list => n, :fetch => n, :pull => n, :create => n, :update => n, :destroy => n} if n.is_a?(Numeric)
         end
-        @remote_timeout
+        _remote_timeout
+      end
+
+      def remote_attribute_map
+        self._remote_attribute_map
+      end
+
+      def local_attribute_routes
+        self._local_attribute_routes
       end
 
       def fetch_with(local_key, options={})
-        @local_attribute_routes.merge!(local_key => options[:path])
+        self._local_attribute_routes.merge!(local_key => options[:path])
       end
-
-      attr_accessor :remotable_skip_validation_on_sync
 
       def remotable_skip_validation!
         self.remotable_skip_validation_on_sync = true
@@ -118,10 +129,6 @@ module Remotable
         self.remotable_skip_validation_on_sync
       end
 
-
-
-      attr_reader :remote_attribute_map,
-                  :local_attribute_routes
 
       def local_key(remote_key=nil)
         remote_key ||= self.remote_key
@@ -133,24 +140,24 @@ module Remotable
       end
 
       def remote_attribute_names
-        remote_attribute_map.keys
+        _remote_attribute_map.keys
       end
 
       def local_attribute_names
-        remote_attribute_map.values
+        _remote_attribute_map.values
       end
 
       def remote_attribute_name(local_attr)
-        remote_attribute_map.key(local_attr) || local_attr
+        _remote_attribute_map.key(local_attr) || local_attr
       end
 
       def local_attribute_name(remote_attr)
-        remote_attribute_map[remote_attr] || remote_attr
+        _remote_attribute_map[remote_attr] || remote_attr
       end
 
       def route_for(remote_key)
         local_key = self.local_key(remote_key)
-        local_attribute_routes[local_key] || default_route_for(local_key, remote_key)
+        _local_attribute_routes[local_key] || default_route_for(local_key, remote_key)
       end
 
       def default_route_for(local_key, remote_key=nil)
@@ -254,7 +261,7 @@ module Remotable
         generate_default_remote_key # <- Make sure we've figured out the remote
                                     #    primary key if we're evaluating a finder
 
-        return false unless local_attribute_routes.key?(local_key)
+        return false unless _local_attribute_routes.key?(local_key)
 
         { :local_attributes => local_attributes,
           :remote_key => remote_key }
@@ -412,7 +419,7 @@ module Remotable
 
 
       def generate_default_remote_key
-        return @remote_key if @remote_key
+        return _remote_key if _remote_key
         raise("No remote key supplied and :id is not a remote attribute") unless remote_attribute_names.member?(:id)
         remote_key(:id)
       end
