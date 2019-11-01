@@ -29,5 +29,12 @@ class ActiveSupport::TestCase
   end
   teardown do
     DatabaseCleaner.clean
+
+    Remotable.reset_nosync!
+    Tenant.reset_nosync!
+    BespokeTenant.reset_nosync!
+    RemoteWithoutKey.reset_nosync!
+    RemoteWithKey.reset_nosync!
+    RemoteWithCompositeKey.reset_nosync!
   end
 end

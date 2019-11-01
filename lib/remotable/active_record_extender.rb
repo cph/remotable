@@ -174,10 +174,23 @@ module Remotable
       # !nb: this method is called when associations are loaded
       # so you can use the remoted record in associations.
       def instantiate(*args)
-        record = super
+        super.tap do |record|
+          sync_on_instantiate(record) unless ActiveRecord.version.segments.first > 5
+        end
+      end
+
+      # !nb: In Rails 6+, this has been extracted from instantiate and can be called
+      # to instantiate homogenous sets of records without calling instantiate
+      def instantiate_instance_of(*args)
+        super.tap do |record|
+          sync_on_instantiate(record)
+        end
+      end
+
+      def sync_on_instantiate(record)
         if record.expired? && !record.nosync?
           begin
-            Remotable.logger.debug "[remotable:#{name.underscore}:instantiate](#{record.fetch_value.inspect}) expired #{record.expires_at}"
+            Remotable.logger.debug "[remotable:#{name.underscore}:sync_on_instantiate](#{record.fetch_value.inspect}) expired #{record.expires_at}"
             record.pull_remote_data!
           rescue Remotable::TimeoutError
             report_ignored_timeout_error($!)
@@ -189,7 +202,6 @@ module Remotable
             report_ignored_ssl_error($!)
           end
         end
-        record
       end
 
       def report_ignored_timeout_error(error)
@@ -561,7 +573,7 @@ module Remotable
         true
       else
         merge_remote_errors(remote_resource.errors)
-        false
+        ActiveRecord.version.segments.first > 4 ? throw(:abort) : false
       end
     rescue Remotable::NotFound
       report_ignored_404_on_destroy $!
