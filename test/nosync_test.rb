@@ -6,7 +6,6 @@ require "support/active_resource"
 class NoSyncTest < ActiveSupport::TestCase
 
 
-
   test "nosync? should be false by default" do
     assert_equal false, Tenant.new.nosync?
   end
@@ -56,7 +55,7 @@ class NoSyncTest < ActiveSupport::TestCase
   # ========================================================================= #
 
   test "should do nothing if a tenant is expired" do
-    tenant = Factory(:tenant, :expires_at => 1.year.ago)
+    tenant = create(:tenant, :expires_at => 1.year.ago)
 
     Remotable.nosync do
       result = Tenant.find_by_remote_id(tenant.remote_id)

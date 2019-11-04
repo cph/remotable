@@ -5,8 +5,6 @@ require "rr"
 
 
 class BespokeTest < ActiveSupport::TestCase
-  include RR::Adapters::TestUnit
-
 
   teardown do
     def model.new_resource
@@ -68,7 +66,7 @@ class BespokeTest < ActiveSupport::TestCase
   # ========================================================================= #
 
   test "should update a record remotely when updating one locally" do
-    @tenant = Factory(:bespoke_tenant)
+    @tenant = create(:bespoke_tenant)
     new_name = "Totally Wonky"
 
     # RemoteTenant.run_simulation do |s|
@@ -90,7 +88,7 @@ class BespokeTest < ActiveSupport::TestCase
   end
 
   test "should fail to update a record locally when failing to update one remotely" do
-    @tenant = Factory(:bespoke_tenant, :nosync => false)
+    @tenant = create(:bespoke_tenant, :nosync => false)
 
     def model.find_by(attribute, value)
       BespokeResource.new(attribute => value)
@@ -156,13 +154,13 @@ class BespokeTest < ActiveSupport::TestCase
   # ========================================================================= #
 
   test "should destroy a record remotely when destroying one locally" do
-    @tenant = Factory(:bespoke_tenant, :nosync => false)
+    @tenant = create(:bespoke_tenant, :nosync => false)
     mock(resource).destroy { true }
     @tenant.destroy
   end
 
   test "should fail to destroy a record locally when failing to destroy one remotely" do
-    @tenant = Factory(:bespoke_tenant, :nosync => false)
+    @tenant = create(:bespoke_tenant, :nosync => false)
     mock(resource).destroy { raise StandardError }
     assert_raises(StandardError) do
       @tenant.destroy
@@ -170,7 +168,7 @@ class BespokeTest < ActiveSupport::TestCase
   end
 
   test "should delete a local record when a remote record has been deleted" do
-    @tenant = Factory(:bespoke_tenant, :expires_at => 1.year.ago)
+    @tenant = create(:bespoke_tenant, :expires_at => 1.year.ago)
 
     def model.find_by(remote_attr, value)
       nil
