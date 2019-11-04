@@ -1,23 +1,28 @@
-Factory.define :tenant do |f|
-  f.sequence(:slug) { |n| "test#{n}" }
-  f.name "Test"
-  f.sequence(:remote_id)
-  f.expires_at 100.years.from_now
-  f.nosync true
+FactoryBot.define do
+
+  factory :tenant do
+    sequence(:slug) { |n| "test#{n}" }
+    name { "Test" }
+    sequence :remote_id
+    expires_at { 100.years.from_now }
+    nosync { true }
+  end
+
+  factory :bespoke_tenant do
+    sequence(:slug) { |n| "test#{n}" }
+    name { "Test" }
+    sequence :remote_id
+    expires_at { 100.years.from_now }
+    nosync { true }
+  end
+
+  factory :null_test_tenant do
+    sequence(:slug) { |n| "test#{n}" }
+    name { "Test" }
+    sequence :remote_id
+    expires_at { 100.years.from_now }
+    nosync { true }
+  end
+
 end
 
-Factory.define :bespoke_tenant do |f|
-  f.sequence(:slug) { |n| "test#{n}" }
-  f.name "Test"
-  f.sequence(:remote_id)
-  f.expires_at 100.years.from_now
-  f.nosync true
-end
-
-Factory.define :null_test_tenant do |f|
-  f.sequence(:slug) { |n| "test#{n}" }
-  f.name "Test"
-  f.sequence(:remote_id)
-  f.expires_at 100.years.from_now
-  f.nosync true
-end

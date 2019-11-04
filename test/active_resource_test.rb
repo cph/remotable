@@ -7,7 +7,6 @@ require "rr"
 
 
 class ActiveResourceTest < ActiveSupport::TestCase
-  include RR::Adapters::TestUnit
 
   test "should make an absolute path and add the format" do
     assert_equal "/api/accounts/by_slug/value.json",   RemoteTenant.expanded_path_for("by_slug/value")
@@ -154,7 +153,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   # ========================================================================= #
 
   test "should not fetch a remote record when a local record is not expired" do
-    tenant = Factory(:tenant, :expires_at => 100.years.from_now)
+    tenant = create(:tenant, :expires_at => 100.years.from_now)
     unexpected_name = "Totally Wonky"
 
     RemoteTenant.run_simulation do |s|
@@ -170,7 +169,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   end
 
   test "should fetch a remote record when a local record is expired" do
-    tenant = Factory(:tenant, :expires_at => 1.year.ago)
+    tenant = create(:tenant, :expires_at => 1.year.ago)
     unexpected_name = "Totally Wonky"
 
     RemoteTenant.run_simulation do |s|
@@ -186,7 +185,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   end
 
   test "should treat a 304 response as no changes" do
-    tenant = Factory(:tenant, :expires_at => 1.year.ago)
+    tenant = create(:tenant, :expires_at => 1.year.ago)
 
     RemoteTenant.run_simulation do |s|
       s.show(tenant.remote_id, nil, :status => 304, :headers => if_modified_since(tenant))
@@ -199,7 +198,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
 
   test "should ignore a 503 response" do
     expired_at = 1.year.ago
-    tenant = Factory(:tenant, :expires_at => expired_at)
+    tenant = create(:tenant, :expires_at => expired_at)
 
     RemoteTenant.run_simulation do |s|
       s.show(tenant.remote_id, nil, :status => 503, :headers => if_modified_since(tenant))
@@ -219,7 +218,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   # ========================================================================= #
 
   test "should update a record remotely when updating one locally" do
-    tenant = Factory(:tenant)
+    tenant = create(:tenant)
     new_name = "Totally Wonky"
 
     RemoteTenant.run_simulation do |s|
@@ -242,7 +241,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   end
 
   test "should be able to update resources by different attributes" do
-    tenant = RemoteWithKey.where(id: Factory(:tenant).id).first
+    tenant = RemoteWithKey.where(id: create(:tenant).id).first
     new_name = "Totally Wonky"
 
     RemoteTenant.run_simulation do |s|
@@ -265,7 +264,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   end
 
   test "should fail to update a record locally when failing to update one remotely" do
-    tenant = Factory(:tenant)
+    tenant = create(:tenant)
     new_name = "Totally Wonky"
 
     RemoteTenant.run_simulation do |s|
@@ -363,7 +362,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   # ========================================================================= #
 
   test "should destroy a record remotely when destroying one locally" do
-    tenant = Factory(:tenant)
+    tenant = create(:tenant)
 
     RemoteTenant.run_simulation do |s|
       s.show(tenant.remote_id, {
@@ -381,7 +380,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   end
 
   test "should destroy resources by different attributes" do
-    tenant = RemoteWithKey.where(id: Factory(:tenant).id).first
+    tenant = RemoteWithKey.where(id: create(:tenant).id).first
     new_name = "Totally Wonky"
 
     RemoteTenant.run_simulation do |s|
@@ -399,7 +398,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   end
 
   test "should fail to destroy a record locally when failing to destroy one remotely" do
-    tenant = Factory(:tenant)
+    tenant = create(:tenant)
 
     RemoteTenant.run_simulation do |s|
       s.show(tenant.remote_id, {
@@ -420,7 +419,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   end
 
   test "should succeed in destroying a record locally when the remote source is not found" do
-    tenant = Factory(:tenant)
+    tenant = create(:tenant)
 
     RemoteTenant.run_simulation do |s|
       s.show(tenant.remote_id, {
@@ -439,7 +438,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   end
 
   test "should delete a local record when a remote record has been deleted" do
-    tenant = Factory(:tenant, :expires_at => 1.year.ago)
+    tenant = create(:tenant, :expires_at => 1.year.ago)
 
     assert_difference "Tenant.count", -1 do
       RemoteTenant.run_simulation do |s|
@@ -459,7 +458,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   # ========================================================================= #
 
   test "should be able to find all remote resources and sync them with local resources" do
-    tenant = Factory(:tenant, :expires_at => 1.year.ago)
+    tenant = create(:tenant, :expires_at => 1.year.ago)
 
     assert_equal 1, Tenant.count, "There's supposed to be 1 tenant"
 
@@ -467,10 +466,10 @@ class ActiveResourceTest < ActiveSupport::TestCase
     assert_difference "Tenant.count", +1 do
       RemoteTenant.run_simulation do |s|
         s.show(nil, [
-          { :id => tenant.id,
+          { :id => tenant.remote_id,
             :slug => "a-different-slug",
             :church_name => "A Different Name" },
-          { :id => tenant.id + 1,
+          { :id => tenant.remote_id + 1,
             :slug => "generic-slug",
             :church_name => "Generic Name" }],
           :path => "/api/accounts.json")
@@ -501,7 +500,7 @@ class ActiveResourceTest < ActiveSupport::TestCase
   end
 
   test "should ignore a Remotable::TimeoutError when instantiating a record" do
-    tenant = Factory(:tenant, :expires_at => 1.year.ago)
+    tenant = create(:tenant, :expires_at => 1.year.ago)
 
     assert_nothing_raised do
       stub(Tenant.remote_model).find do |*args|

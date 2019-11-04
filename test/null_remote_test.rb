@@ -4,16 +4,13 @@ require "support/null"
 
 
 class NullRemoteTest < ActiveSupport::TestCase
-  include RR::Adapters::TestUnit
-
-
 
   # ========================================================================= #
   # Finding                                                                   #
   # ========================================================================= #
 
   test "should do nothing if a tenant is expired" do
-    tenant = Factory(:null_test_tenant, expires_at: 2.days.ago)
+    tenant = create(:null_test_tenant, expires_at: 2.days.ago)
     result = NullTestTenant.find_by_slug(tenant.slug)
     assert_equal tenant, result
   end
@@ -35,7 +32,7 @@ class NullRemoteTest < ActiveSupport::TestCase
   # ========================================================================= #
 
   test "should update a record locally without any interference" do
-    tenant = Factory(:null_test_tenant)
+    tenant = create(:null_test_tenant)
     new_name = "Totally Wonky"
 
     tenant.name = new_name
@@ -63,7 +60,7 @@ class NullRemoteTest < ActiveSupport::TestCase
   # ========================================================================= #
 
   test "should destroy a record locally without any interference" do
-    tenant = Factory(:null_test_tenant)
+    tenant = create(:null_test_tenant)
     tenant.nosync = false
     tenant.destroy
   end
