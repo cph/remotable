@@ -5,6 +5,7 @@ require "remotable/validate_models"
 require "remotable/with_remote_model_proxy"
 require "remotable/errors"
 require "remotable/logger_wrapper"
+require "active_resource/threadsafe_attributes"
 
 
 # Remotable keeps a locally-stored ActiveRecord
@@ -36,6 +37,7 @@ require "remotable/logger_wrapper"
 module Remotable
   extend Nosync
   extend ValidateModels
+  include ThreadsafeAttributes
 
   # By default, Remotable will validate the models you
   # supply it via +remote_model+. You can set validate_models
@@ -52,6 +54,8 @@ module Remotable
     attr_accessor :log_level
     Remotable.log_level = :debug
   end
+
+  threadsafe_attribute :_remote_model, :__remotable_included
 
 
 
@@ -88,17 +92,17 @@ module Remotable
   #
   def remote_model(*args)
     if args.length >= 1
-      @remote_model = args.first
+      self._remote_model = args.first
 
-      @__remotable_included ||= begin
+      self.__remotable_included ||= begin
         require "remotable/active_record_extender"
         include Remotable::ActiveRecordExtender
         true
       end
 
-      extend_remote_model(@remote_model) if @remote_model
+      extend_remote_model(_remote_model) if _remote_model
     end
-    @remote_model
+    _remote_model
   end
 
 

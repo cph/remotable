@@ -1,6 +1,7 @@
 require "test_helper"
 require "remotable"
 require "support/bespoke"
+require "support/concurrently"
 
 
 class RemotableTest < ActiveSupport::TestCase
@@ -54,6 +55,24 @@ class RemotableTest < ActiveSupport::TestCase
       assert_equal nil, Tenant.remote_model, "remote_model didn't get set to nil"
       Tenant.create!(:name => "Test 1", :slug => "test-1")
       assert_not_nil Tenant.find_by_name("Test 1"), "new tenant was not found"
+    end
+  end
+
+  test "should support temporary models in a threaded environment" do
+    first_slug = "404"
+    second_slug = "405"
+
+    afterwards do
+      BespokeTenant.where(slug: [ first_slug, second_slug ]).delete_all
+    end
+
+    concurrently do
+      assert_nil BespokeTenant.find_by_slug(first_slug), "Expected not to find the first model initially"
+      assert_not_nil BespokeTenant.with_remote_model(BespokeModel2.new) {
+        BespokeTenant.find_by_slug(first_slug)
+        sleep rand
+      }, "Expected to find the first model with the temporary tenant"
+      assert_nil BespokeTenant.find_by_slug(second_slug), "Expected not to find the second model when searching with the original model again"
     end
   end
 
