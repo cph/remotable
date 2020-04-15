@@ -5,7 +5,6 @@ require "remotable/validate_models"
 require "remotable/with_remote_model_proxy"
 require "remotable/errors"
 require "remotable/logger_wrapper"
-require "active_resource/threadsafe_attributes"
 
 
 # Remotable keeps a locally-stored ActiveRecord
@@ -55,7 +54,6 @@ module Remotable
     Remotable.log_level = :debug
   end
 
-  threadsafe_attribute :_remote_model, :__remotable_included
 
 
 
@@ -92,17 +90,13 @@ module Remotable
   #
   def remote_model(*args)
     if args.length >= 1
-      self._remote_model = args.first
+      @remote_model = args.first
 
-      self.__remotable_included ||= begin
-        require "remotable/active_record_extender"
-        include Remotable::ActiveRecordExtender
-        true
-      end
+      ensure_remotable_included!
 
-      extend_remote_model(_remote_model) if _remote_model
+      extend_remote_model(@remote_model) if @remote_model
     end
-    _remote_model
+    override_remote_model? ? _remote_model_override : @remote_model
   end
 
 
@@ -110,11 +104,13 @@ module Remotable
   def with_remote_model(model)
     if block_given?
       begin
-        original = self.remote_model
-        self.remote_model(model)
+        extend_remote_model(model) if model
+        ensure_remotable_included!
+        self._remote_model_override = model
+        self._use_remote_model_override = true
         yield
       ensure
-        self.remote_model(original)
+        self._use_remote_model_override = false
       end
     else
       WithRemoteModelProxy.new(self, model)
@@ -150,6 +146,34 @@ module Remotable
 
 
 private
+
+  def override_remote_model?
+    !!_use_remote_model_override
+  end
+
+  def ensure_remotable_included!
+    @__remotable_included ||= begin
+      require "remotable/active_record_extender"
+      include Remotable::ActiveRecordExtender
+      true
+    end
+  end
+
+  def _remote_model_override
+    Thread.current.thread_variable_get "remotable._remote_model_override.#{self.object_id}"
+  end
+
+  def _remote_model_override=(value)
+    Thread.current.thread_variable_set "remotable._remote_model_override.#{self.object_id}", value
+  end
+
+  def _use_remote_model_override
+    Thread.current.thread_variable_get "remotable._use_remote_model_override.#{self.object_id}"
+  end
+
+  def _use_remote_model_override=(value)
+    Thread.current.thread_variable_set "remotable._use_remote_model_override.#{self.object_id}", value
+  end
 
   def extend_remote_model(remote_model)
     if remote_model.is_a?(Class) and (remote_model < ActiveResource::Base)

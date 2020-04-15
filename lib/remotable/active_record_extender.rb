@@ -1,7 +1,6 @@
 require "remotable/core_ext"
 require "active_support/concern"
 require "active_support/core_ext/array/wrap"
-require "active_resource/threadsafe_attributes"
 require "benchmark"
 
 
@@ -43,10 +42,9 @@ module Remotable
 
     module ClassMethods
       include Nosync
-      include ThreadsafeAttributes
 
-      threadsafe_attribute :_remote_key, :_expires_after, :_remote_attribute_map,
-        :_local_attribute_routes, :_remote_timeout, :remotable_skip_validation_on_sync
+      attr_accessor :_remote_attribute_map, :_local_attribute_routes, :_expires_after,
+        :_remote_timeout, :remotable_skip_validation_on_sync
 
       def nosync?
         return true if remote_model.nil?
@@ -83,9 +81,9 @@ module Remotable
           # Set up a finder method for the remote_key
           fetch_with(local_key(remote_key), options)
 
-          self._remote_key = remote_key
+          @remote_key = remote_key
         else
-          _remote_key || generate_default_remote_key
+          @remote_key || generate_default_remote_key
         end
       end
 
@@ -431,7 +429,7 @@ module Remotable
 
 
       def generate_default_remote_key
-        return _remote_key if _remote_key
+        return @remote_key if @remote_key
         raise("No remote key supplied and :id is not a remote attribute") unless remote_attribute_names.member?(:id)
         remote_key(:id)
       end

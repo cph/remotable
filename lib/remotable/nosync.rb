@@ -1,5 +1,3 @@
-require "active_resource/threadsafe_attributes"
-
 module Remotable
   module Nosync
 
@@ -50,7 +48,6 @@ module Remotable
     end
 
     module ClassMethods
-      include ThreadsafeAttributes
       include InstanceMethods
 
       def reset_nosync!
@@ -62,7 +59,15 @@ module Remotable
       end
 
     private
-      threadsafe_attribute :_nosync
+
+      def _nosync
+        Thread.current.thread_variable_get "remotable.nosync.#{self.object_id}"
+      end
+
+      def _nosync=(value)
+        Thread.current.thread_variable_set "remotable.nosync.#{self.object_id}", value
+      end
+
     end
 
   end
