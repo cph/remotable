@@ -61,11 +61,17 @@ module Remotable
     private
 
       def _nosync
-        Thread.current.thread_variable_get "remotable.nosync.#{self.object_id}"
+        return Thread.current.thread_variable_get "remotable.nosync.#{self.object_id}" if nosync_defined_on?(Thread.current)
+        return Thread.main.thread_variable_get "remotable.nosync.#{self.object_id}" if nosync_defined_on?(Thread.main)
       end
 
       def _nosync=(value)
         Thread.current.thread_variable_set "remotable.nosync.#{self.object_id}", value
+        Thread.current.thread_variable_set "remotable.nosync.#{self.object_id}.defined", true
+      end
+
+      def nosync_defined_on?(thread)
+        !!thread.thread_variable_get("remotable.nosync.#{self.object_id}.defined")
       end
 
     end
