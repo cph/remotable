@@ -348,7 +348,7 @@ module Remotable
       end
 
       def remote_path_for_simple_key(route, local_key, value)
-        route.gsub(/:#{local_key}/, URI.escape(value.to_s))
+        route.gsub(/:#{local_key}/, CGI.escape(value.to_s))
       end
 
       def remote_path_for_composite_key(route, local_key, values)
