@@ -1,5 +1,8 @@
 # Changelog
 
+### 0.6.2
+* **Fix** Replace obsolete call to URI.escape with CGI.escape
+
 ### 0.6.1
 * **Bugfix** Tweaked the behavior of `Remotable.nosync?` to defer to a value set on the main thread if no value has been set for the current thread.
 
