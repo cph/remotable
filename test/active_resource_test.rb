@@ -141,8 +141,8 @@ class ActiveResourceTest < ActiveSupport::TestCase
     simple_key_path = Tenant.remote_path_for_simple_key("tenants/:slug", :slug, bad_uri)
     composite_key_path = Tenant.remote_path_for_composite_key(route, [:group_id, :slug], [5, bad_uri])
 
-    assert_equal "tenants/http://()%20%7B%20:;%20%7D;%20ping%20-c%2023%200.0.0.0", simple_key_path
-    assert_equal "groups/5/tenants/http://()%20%7B%20:;%20%7D;%20ping%20-c%2023%200.0.0.0", composite_key_path
+    assert_equal "tenants/http%3A%2F%2F%28%29%20%7B%20%3A%3B%20%7D%3B%20ping%20-c%2023%200.0.0.0", simple_key_path
+    assert_equal "groups/5/tenants/http%3A%2F%2F%28%29%20%7B%20%3A%3B%20%7D%3B%20ping%20-c%2023%200.0.0.0", composite_key_path
   end
 
 

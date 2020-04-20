@@ -348,7 +348,7 @@ module Remotable
       end
 
       def remote_path_for_simple_key(route, local_key, value)
-        route.gsub(/:#{local_key}/, CGI.escape(value.to_s))
+        route.gsub(/:#{local_key}/, ERB::Util.url_encode(value.to_s))
       end
 
       def remote_path_for_composite_key(route, local_key, values)
@@ -358,7 +358,7 @@ module Remotable
         end
 
         (0...values.length).inject(route) do |route, i|
-          route.gsub(/:#{local_key[i]}/, URI.escape(values[i].to_s))
+          route.gsub(/:#{local_key[i]}/, ERB::Util.url_encode(values[i].to_s))
         end
       end
 
