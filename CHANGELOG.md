@@ -1,7 +1,10 @@
 # Changelog
 
-### 0.6.2
+### 0.6.3
 * **Fix** Replaced deprecated calls to URI.escape
+
+### 0.6.2
+* ~~**Bugfix** Replaced deprecated calls to URI.escape~~ _Pulled_
 
 ### 0.6.1
 * **Bugfix** Tweaked the behavior of `Remotable.nosync?` to defer to a value set on the main thread if no value has been set for the current thread.
