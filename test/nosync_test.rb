@@ -48,12 +48,20 @@ class NoSyncTest < ActiveSupport::TestCase
     assert_equal true, Tenant.nosync?
   end
 
-  test "nosync? should defer to the main thread's value if set there but not on the current thread" do
+  test "nosync? should not defer to the main thread's value if set there but not on the current thread" do
     Remotable.nosync!
     subthread = Thread.new do
-      assert Remotable.nosync?
-      Remotable.reset_nosync!
       refute Remotable.nosync?
+      Thread.stop
+    end
+    sleep 0.1 while subthread.status != "sleep"
+    assert Remotable.nosync?
+  end
+
+  test "unsafe_nosync! should coerce nosync? to true across threads" do
+    Remotable.unsafe_nosync!
+    subthread = Thread.new do
+      assert Remotable.nosync?
       Thread.stop
     end
     sleep 0.1 while subthread.status != "sleep"

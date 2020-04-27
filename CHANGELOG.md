@@ -1,5 +1,10 @@
 # Changelog
 
+### 0.6.4
+* **Feature** Added `Remotable.unsafe_nosync!` method to set `nosync` globally using a class variable. As the method name indicates, this is not threadsafe and should only be used for testing or other situations where thread safety is not an issue.
+* **Bugfix** Stopped deferring to `Thread.main` if `nosync` was unset on the current thread; while convenient for tests (see above), it ended up allowing requests to leak state if they were handled on the main thread.
+
+
 ### 0.6.3
 * **Fix** Replaced deprecated calls to URI.escape
 
