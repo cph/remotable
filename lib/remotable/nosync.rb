@@ -50,8 +50,14 @@ module Remotable
     module ClassMethods
       include InstanceMethods
 
+      def unsafe_nosync!
+        nosync!
+        @_unsafe_nosync = true
+      end
+
       def reset_nosync!
         self.nosync = nil
+        remove_instance_variable :@_unsafe_nosync if instance_variable_defined? :@_unsafe_nosync
       end
 
       def nosync=(val)
@@ -62,7 +68,7 @@ module Remotable
 
       def _nosync
         return Thread.current.thread_variable_get "remotable.nosync.#{self.object_id}" if nosync_defined_on?(Thread.current)
-        return Thread.main.thread_variable_get "remotable.nosync.#{self.object_id}" if nosync_defined_on?(Thread.main)
+        @_unsafe_nosync if instance_variable_defined?(:@_unsafe_nosync)
       end
 
       def _nosync=(value)
