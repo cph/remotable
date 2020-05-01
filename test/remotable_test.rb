@@ -170,4 +170,17 @@ class RemotableTest < ActiveSupport::TestCase
   end
 
 
+
+  # ========================================================================= #
+  # ActiveRecordExtender                                                      #
+  # ========================================================================= #
+
+  test "should extend an ActiveRecord subclass with Nosync class methods" do
+    class Example5 < ActiveRecord::Base; self.table_name = "tenants"; end
+    Example5.remote_model BespokeModel.new
+    # Method is _only_ on the class version
+    assert Example5.respond_to?(:unsafe_nosync!)
+  end
+
+
 end
