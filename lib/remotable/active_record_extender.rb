@@ -17,6 +17,16 @@ module Remotable
 
 
     included do
+      extend Nosync
+
+      # Has to be re-defined _after_ Nosync is extended, which cannot
+      # be done as part of the ClassMethods module
+      def self.nosync?
+        return true if remote_model.nil?
+        return super if nosync_value?
+        Remotable.nosync?
+      end
+
       before_update   :update_remote_resource,  :unless => :nosync?
       before_create   :create_remote_resource,  :unless => :nosync?
       before_destroy  :destroy_remote_resource, :unless => :nosync?
@@ -41,16 +51,10 @@ module Remotable
 
 
     module ClassMethods
-      include Nosync
 
       attr_accessor :_remote_attribute_map, :_local_attribute_routes, :_expires_after,
         :_remote_timeout, :remotable_skip_validation_on_sync
 
-      def nosync?
-        return true if remote_model.nil?
-        return super if nosync_value?
-        Remotable.nosync?
-      end
 
       # Sets the key with which a resource is identified remotely.
       # If no remote key is set, the remote key is assumed to be :id.
