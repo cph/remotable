@@ -176,7 +176,7 @@ class BespokeTest < ActiveSupport::TestCase
 
     assert_difference "BespokeTenant.count", -1 do
       @tenant = BespokeTenant.find_by_slug(@tenant.slug)
-      assert_equal nil, @tenant
+      assert_nil @tenant
     end
   end
 
