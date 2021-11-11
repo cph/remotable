@@ -15,8 +15,6 @@ jobs:
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
-        env:
-          BUNDLE_GEMS__CONTRIBSYS__COM
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
