@@ -22,4 +22,4 @@ jobs:
       - name: Run the tests
         id: tests
         run: |
-          bundle exec rails rake test
+          bundle exec rake test
