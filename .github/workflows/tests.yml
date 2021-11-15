@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+    env:
+      GEM_HOME: $HOME/.gem
     steps:
       - name: Checkout
         uses: actions/checkout@v2
