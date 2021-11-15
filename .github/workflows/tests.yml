@@ -24,7 +24,7 @@ jobs:
           bundler-cache: true
 
       - name: Use latest ruby gems
-        if: ${{ matrix.ruby == 2.6 }
+        if: ${{ matrix.ruby == '2.6' }
         run: gem update --system
 
       - name: Clean appraisals
