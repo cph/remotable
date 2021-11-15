@@ -6,7 +6,9 @@ jobs:
     name: Rails Tests
     runs-on: ubuntu-latest
     strategy:
-      ruby: [2.6, 2.7]
+      matrix:
+        ruby: [2.6, 2.7]
+        appraisal-build: ["rails-6.0", "rails-6.1"]
       fail-fast: false
     env:
       GEM_HOME: $HOME/.gem
@@ -29,4 +31,4 @@ jobs:
 
       - name: Run the tests
         id: tests
-        run: bundle exec appraisal rails-6.0 rake test
+        run: bundle exec appraisal ${{ matrix.appraisal-build }} rake test
