@@ -26,6 +26,11 @@ jobs:
           GEM_HOME: $HOME/.gem
         run: gem install rails -v "~> 6.1.0"
 
+      - name: Install bundler
+        env:
+          GEM_HOME: $HOME/.gem
+        run: gem install bundler
+
       - name: Clean appraisals
         run: bundle exec appraisal clean
 
