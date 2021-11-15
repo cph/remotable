@@ -11,11 +11,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.6
-          bundler-cache: true
+      - name: Install Rails 5.0
+        run: gem install rails -v "~> 5.0.0"
+
+      - name: Install Rails 5.1
+        run: gem install rails -v "~> 5.1.0"
+
+      - name: Install Rails 6.1
+        run: gem install rails -v "~> 6.1.0"
 
       - name: Clean appraisals
         run: bundle exec appraisal clean
