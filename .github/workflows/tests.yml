@@ -11,26 +11,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Rails 5.0
-        env:
-          GEM_HOME: $HOME/.gem
-        run: gem install rails -v "~> 5.0.0"
-
-      - name: Install Rails 5.1
-        env:
-          GEM_HOME: $HOME/.gem
-        run: gem install rails -v "~> 5.1.0"
-
-      - name: Install Rails 6.1
-        env:
-          GEM_HOME: $HOME/.gem
-        run: gem install rails -v "~> 6.1.0"
-
-      - name: Install bundler
-        env:
-          GEM_HOME: $HOME/.gem
-        run: gem install bundler
-
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -40,8 +20,8 @@ jobs:
       - name: Clean appraisals
         run: bundle exec appraisal clean
 
-      - name: Generate appraisals
-        run: bundle exec appraisal generate
+      - name: Generate dependencies
+        run: bundle exec appraisal install
 
       - name: Run the tests
         id: tests
