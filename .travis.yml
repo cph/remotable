@@ -13,7 +13,7 @@ jobs:
     - rvm: 2.7
       gemfile: gemfiles/rails-edge.gemfile
   allow_failures:
-    - gemfile: gemfiles/rails_edge.gemfilee
+    - gemfile: gemfiles/rails_edge.gemfile
 
 script: bundle exec rake test
 
