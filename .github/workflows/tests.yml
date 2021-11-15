@@ -33,8 +33,8 @@ jobs:
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
-        ruby-version: 2.7
         with:
+          ruby-version: 2.7
           bundler-cache: true
 
       - name: Clean appraisals
