@@ -20,11 +20,8 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler: 2.1.4
+          bundler: 2.2.30
           bundler-cache: true
-
-      - name: Use latest ruby gems
-        run: gem update --system
 
       - name: Clean appraisals
         run: bundle exec appraisal clean
