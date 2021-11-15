@@ -11,6 +11,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Use latest ruby gems
+        run: gem update --system
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
