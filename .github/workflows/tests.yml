@@ -28,7 +28,9 @@ jobs:
 
       - name: Generate dependencies
         run: bundle exec appraisal install
+        continue-on-error: true
 
       - name: Run the tests
+        if:
         id: tests
         run: bundle exec appraisal ${{ matrix.appraisal-build }} rake test
