@@ -23,8 +23,8 @@ jobs:
           bundler: 2.2.14
           bundler-cache: true
 
-      - name: Force binstubs
-        run: bundle binstubs bundler --force
+      - name: Update system gem
+        run: gem update --system
 
       - name: Clean appraisals
         run: bundle exec appraisal clean
