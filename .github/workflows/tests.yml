@@ -23,8 +23,11 @@ jobs:
           bundler: 2.2.30
           bundler-cache: true
 
-      - name: Update gemsys
-        run: gem update --system
+      - name: Install rubygems-update
+        run: gem install rubygems-update
+
+      - name: Update rubygems
+        run: ruby update_rubygems
 
       - name: Clean appraisals
         run: bundle exec appraisal clean
