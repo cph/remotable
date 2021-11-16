@@ -20,14 +20,8 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler: 2.2.30
+          bundler: 2.2.14
           bundler-cache: true
-
-      - name: Install rubygems-update
-        run: gem install rubygems-update
-
-      - name: Update rubygems
-        run: update_rubygems
 
       - name: Clean appraisals
         run: bundle exec appraisal clean
