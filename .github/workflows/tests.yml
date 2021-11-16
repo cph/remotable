@@ -27,7 +27,7 @@ jobs:
         run: gem install rubygems-update
 
       - name: Update rubygems
-        run: ruby update_rubygems
+        run: update_rubygems
 
       - name: Clean appraisals
         run: bundle exec appraisal clean
