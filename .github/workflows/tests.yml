@@ -4,13 +4,10 @@ jobs:
   rails:
     name: Rails Tests
     runs-on: ubuntu-latest
-    # One of the tests is a threaded test and does not appear to play well with parallel jobs,
-    # so we will only allow one job to run at a time by setting max-parallel to 1
     strategy:
       matrix:
         ruby: [2.6, 2.7, "3.0"]
         gemfile: ["gemfiles/rails_6.0.gemfile", "gemfiles/rails_6.1.gemfile"]
-      max-parallel: 1
       fail-fast: false
     env:
       GEM_HOME: $HOME/.gem
@@ -39,8 +36,4 @@ jobs:
 
       - name: Run the tests
         id: tests
-        uses: nick-invision/retry@v2
-        with:
-          timeout_seconds: 30
-          max_attempts: 3
-          command: bundle exec rake test
+        run: bundle exec rake test

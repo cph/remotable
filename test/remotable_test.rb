@@ -68,6 +68,13 @@ class RemotableTest < ActiveSupport::TestCase
 
     concurrently do
       assert_nil BespokeTenant.find_by_slug(first_slug), "Expected not to find the first model initially"
+      # If the second thread attempts the above lookup after the first thread
+      # has already run the lookup below, the lookup above will find the
+      # _local_ record in the database, which is not what this test is trying
+      # to test -- whether we successfully switch models temporarily in a
+      # mult-threaded situation. The extra sleep call ensures that the first
+      # call completes on both before moving on to the rest of the lookups.
+      sleep rand
       assert_not_nil BespokeTenant.with_remote_model(BespokeModel2.new) {
         BespokeTenant.find_by_slug(first_slug)
         sleep rand
