@@ -1,0 +1,39 @@
+name: Tests
+on: [push]
+jobs:
+  rails:
+    name: Rails Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby: [2.6, 2.7, "3.0"]
+        gemfile: ["gemfiles/rails_6.0.gemfile", "gemfiles/rails_6.1.gemfile"]
+      fail-fast: false
+    env:
+      GEM_HOME: $HOME/.gem
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler: 2.2.14
+          bundler-cache: true
+
+      - name: Clean appraisals
+        run: bundle exec appraisal clean
+
+      # We'll let appraisal generate our gemfiles
+      - name: Generate gemfiles
+        run: bundle exec appraisal generate
+
+      # We'll only install the gems for our non-rails-edge tests, those can be run locally
+      # This will overwrite the Gemfile.lock in the root app directory, with the gem versions we need for the test
+      - name: Install gemfile dependencies
+        run: BUNDLE_GEMFILE=${{ matrix.gemfile }} bundle install
+
+      - name: Run the tests
+        id: tests
+        run: bundle exec rake test

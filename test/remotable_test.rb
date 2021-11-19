@@ -52,7 +52,7 @@ class RemotableTest < ActiveSupport::TestCase
   test "should support setting remote_model to nil" do
     Tenant.with_remote_model(nil) do
       Tenant.remote_model
-      assert_equal nil, Tenant.remote_model, "remote_model didn't get set to nil"
+      assert_nil Tenant.remote_model, "remote_model didn't get set to nil"
       Tenant.create!(:name => "Test 1", :slug => "test-1")
       assert_not_nil Tenant.find_by_name("Test 1"), "new tenant was not found"
     end
@@ -68,6 +68,13 @@ class RemotableTest < ActiveSupport::TestCase
 
     concurrently do
       assert_nil BespokeTenant.find_by_slug(first_slug), "Expected not to find the first model initially"
+      # If the second thread attempts the above lookup after the first thread
+      # has already run the lookup below, the lookup above will find the
+      # _local_ record in the database, which is not what this test is trying
+      # to test -- whether we successfully switch models temporarily in a
+      # mult-threaded situation. The extra sleep call ensures that the first
+      # call completes on both before moving on to the rest of the lookups.
+      sleep rand
       assert_not_nil BespokeTenant.with_remote_model(BespokeModel2.new) {
         BespokeTenant.find_by_slug(first_slug)
         sleep rand
@@ -94,7 +101,7 @@ class RemotableTest < ActiveSupport::TestCase
       :slug => "test-1",
       :remote_id => nil,
       :expires_at => 1.day.ago ) }
-    assert_equal nil, tenant.remote_id
+    assert_nil tenant.remote_id
 
     # Fetching this tenant, Remotable will want to
     # refresh it, but it shouldn't because it can't.
@@ -106,11 +113,11 @@ class RemotableTest < ActiveSupport::TestCase
       :name => "Test 1",
       :slug => "test-1",
       :remote_id => nil ) }
-    assert_equal nil, tenant.remote_id
+    assert_nil tenant.remote_id
 
     # Updating this tenatn, Remotable will want to
     # sync it, but it shouldn't because it can't.
-    assert_equal true, tenant.update_attributes(:name => "Test 2"), "The tenant was not updated (errors: #{tenant.errors.full_messages.join(", ")})"
+    assert_equal true, tenant.update(name: "Test 2"), "The tenant was not updated (errors: #{tenant.errors.full_messages.join(", ")})"
   end
 
 
