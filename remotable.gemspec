@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.summary     = %q{Binds an ActiveRecord model to a remote resource and keeps the two synchronized}
   s.description = %q{Remotable keeps a locally-stored ActiveRecord synchronized with a remote resource.}
 
-  s.add_dependency "activeresource", ">= 5.1.1"
+  s.add_dependency "activeresource", ">= 5.2.8.1"
   s.add_dependency "activerecord"
   s.add_dependency "activesupport"
 
