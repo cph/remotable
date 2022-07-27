@@ -610,7 +610,7 @@ module Remotable
 
     def merge_remote_errors(errors)
       Remotable.logger.debug "[remotable:#{self.class.name.underscore}:merge_remote_errors](#{fetch_value.inspect}) #{errors.inspect}"
-      errors.to_h.each do |attribute, messages|
+      errors.to_hash.each do |attribute, messages|
         Array.wrap(messages).each do |message|
           self.errors.add(local_attribute_name(attribute), message)
         end
